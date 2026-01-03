@@ -9,17 +9,23 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -51,6 +57,9 @@ class MainActivity : ComponentActivity() {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
                 val isRoot = currentDestination?.route == "root_pager"
+
+                // Overflow Menu State
+                var showMenu by remember { mutableStateOf(false) }
 
                 BackHandler {
                     if (isRoot) {
@@ -115,30 +124,78 @@ class MainActivity : ComponentActivity() {
                                 composable("thermal_control") { ThermalControlScreen(navController) }
                                 composable("azenith") { AZenithScreen(navController) }
                                 composable("game_boost") { AZenithScreen(navController) }
-                                
-                                // CHANGED: New Integrity & Spoofing Screen
                                 composable("integrity_spoofing") { IntegrityNSpoofingScreen(navController) }
+                                
+                                // NEW: About and Settings
+                                composable("about") { AboutScreen(navController) }
+                                composable("settings") { SettingsScreen(navController) }
                             }
                         }
                     }
 
                     if (isRoot) {
-                        // App Bar - manages its own haze internally
+                        // App Bar with Overflow Menu
                         GradientBlurAppBar(
-                            title = ".method getAddons",
+                            title = stringResource(R.string.app_title_toolkit),
                             icon = Icons.Rounded.Extension,
                             onBackClick = { (context as? Activity)?.finish() },
                             hazeState = appBarHazeState,
-                            modifier = Modifier.align(Alignment.TopCenter)
+                            modifier = Modifier.align(Alignment.TopCenter),
+                            actions = {
+                                Box {
+                                    Surface(
+                                        onClick = { showMenu = true },
+                                        shape = CircleShape,
+                                        color = Color.Transparent,
+                                        contentColor = MaterialTheme.colorScheme.onSurface
+                                    ) {
+                                        Box(
+                                            modifier = Modifier.size(40.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(Icons.Rounded.MoreVert, null)
+                                        }
+                                    }
+
+                                    // Dropdown Menu using material components styled to match glass look
+                                    DropdownMenu(
+                                        expanded = showMenu,
+                                        onDismissRequest = { showMenu = false },
+                                        offset = DpOffset(0.dp, 8.dp),
+                                        modifier = Modifier
+                                            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f))
+                                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+                                            .clip(RoundedCornerShape(12.dp))
+                                    ) {
+                                        DropdownMenuItem(
+                                            text = { Text(stringResource(R.string.menu_settings)) },
+                                            onClick = { 
+                                                showMenu = false
+                                                navController.navigate("settings") 
+                                            },
+                                            leadingIcon = { Icon(Icons.Rounded.Settings, null, modifier = Modifier.size(20.dp)) }
+                                        )
+                                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
+                                        DropdownMenuItem(
+                                            text = { Text(stringResource(R.string.menu_about)) },
+                                            onClick = { 
+                                                showMenu = false
+                                                navController.navigate("about") 
+                                            },
+                                            leadingIcon = { Icon(Icons.Rounded.Info, null, modifier = Modifier.size(20.dp)) }
+                                        )
+                                    }
+                                }
+                            }
                         )
 
-                        // Bottom Navigation - uses separate haze state
+                        // Bottom Navigation
                         SlidingPillNavBar(
                             pagerState = pagerState,
                             items = listOf(
-                                Triple("Home", "Home", Icons.Rounded.Home),
-                                Triple("Performance", "Perf", Icons.Rounded.Speed),
-                                Triple("System", "Sys", Icons.Rounded.SettingsInputComponent)
+                                Triple(stringResource(R.string.nav_home), stringResource(R.string.nav_home), Icons.Rounded.Home),
+                                Triple(stringResource(R.string.nav_perf), stringResource(R.string.nav_perf), Icons.Rounded.Speed),
+                                Triple(stringResource(R.string.nav_sys), stringResource(R.string.nav_sys), Icons.Rounded.SettingsInputComponent)
                             ),
                             onItemClick = { index ->
                                 scope.launch {

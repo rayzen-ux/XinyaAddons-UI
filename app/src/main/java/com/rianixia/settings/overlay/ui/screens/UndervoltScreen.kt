@@ -380,7 +380,7 @@ fun UndervoltScreen(navController: NavController) {
                 onBackClick = { navController.popBackStack() },
                 hazeState = hazeState,
                 modifier = Modifier.align(Alignment.TopCenter),
-                addStatusBarPadding = false, // Critical fix for gap
+                addStatusBarPadding = false,
                 actions = {
                     Surface(
                         onClick = { showInfoDialog = true },

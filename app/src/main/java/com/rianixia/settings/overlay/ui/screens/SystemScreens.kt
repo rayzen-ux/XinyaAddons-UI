@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
@@ -21,18 +22,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.rianixia.settings.overlay.R
 import com.rianixia.settings.overlay.ui.components.*
+import com.rianixia.settings.overlay.ui.viewmodel.SystemViewModel
 
 // ==========================================
 // ROOT SYSTEM DASHBOARD
 // ==========================================
 
 @Composable
-fun SystemScreen(navController: NavController) {
+fun SystemScreen(
+    navController: NavController,
+    viewModel: SystemViewModel = viewModel()
+) {
+    val state by viewModel.uiState.collectAsState()
+
     MaterialGlassScaffold {
         BouncyLazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -60,7 +69,6 @@ fun SystemScreen(navController: NavController) {
 
             // 2. Primary Module: Identity Matrix
             item {
-                // CHANGED: Navigates to the new Integrity & Spoofing screen
                 IdentityMatrixCard(onClick = { navController.navigate("integrity_spoofing") })
             }
 
@@ -111,9 +119,14 @@ fun SystemScreen(navController: NavController) {
                 }
             }
 
-            // 4. Kernel Flags (Toggle Bank)
+            // 4. SystemUI Tuner
             item {
-                SystemPropsBank()
+                SystemPropsBank(
+                    isFlagSecureDisabled = state.isFlagSecureDisabled,
+                    isRotationButtonForced = state.isRotationButtonForced,
+                    onToggleSecure = { viewModel.toggleFlagSecure(it) },
+                    onToggleRotation = { viewModel.toggleRotationButton(it) }
+                )
             }
         }
     }
@@ -246,7 +259,12 @@ fun SystemModuleCard(
 }
 
 @Composable
-fun SystemPropsBank() {
+fun SystemPropsBank(
+    isFlagSecureDisabled: Boolean,
+    isRotationButtonForced: Boolean,
+    onToggleSecure: (Boolean) -> Unit,
+    onToggleRotation: (Boolean) -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -257,7 +275,7 @@ fun SystemPropsBank() {
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Text(
-            stringResource(R.string.kernel_flags),
+            stringResource(R.string.sys_tuner_title),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Black,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -265,22 +283,22 @@ fun SystemPropsBank() {
         )
         
         XinyaToggle(
-            title = stringResource(R.string.secure_flag),
-            subtitle = stringResource(R.string.secure_flag_desc),
+            title = stringResource(R.string.sys_flag_secure_title),
+            subtitle = stringResource(R.string.sys_flag_secure_desc),
             icon = Icons.Rounded.Screenshot,
-            checked = false,
-            onCheckedChange = {},
+            checked = isFlagSecureDisabled,
+            onCheckedChange = onToggleSecure,
             isRisk = true
         )
         
         MaterialDivider()
         
         XinyaToggle(
-            title = stringResource(R.string.force_rotation),
-            subtitle = stringResource(R.string.force_rotation_desc),
+            title = stringResource(R.string.sys_rotation_title),
+            subtitle = stringResource(R.string.sys_rotation_desc),
             icon = Icons.Rounded.ScreenRotation,
-            checked = true,
-            onCheckedChange = {}
+            checked = isRotationButtonForced,
+            onCheckedChange = onToggleRotation
         )
     }
 }
@@ -291,28 +309,82 @@ fun SystemPropsBank() {
 
 @Composable
 fun HaloLightingScreen(navController: NavController) {
-    MaterialGlassScaffold {
-        BouncyLazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(top = 80.dp, bottom = 16.dp, start = 16.dp, end = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            item { SubScreenHeader(stringResource(R.string.halo_light)) { navController.popBackStack() } }
-            item { MaterialGlassCard { Text(stringResource(R.string.preview), color = MaterialTheme.colorScheme.onSurface) } }
-        }
-    }
+    ComingSoonView(
+        navController = navController,
+        title = stringResource(R.string.halo_light)
+    )
 }
 
 @Composable
 fun ScreenResoScreen(navController: NavController) {
+    ComingSoonView(
+        navController = navController,
+        title = stringResource(R.string.resolution)
+    )
+}
+
+@Composable
+private fun ComingSoonView(
+    navController: NavController,
+    title: String
+) {
     MaterialGlassScaffold {
         BouncyLazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(top = 80.dp, bottom = 16.dp, start = 16.dp, end = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item { SubScreenHeader(stringResource(R.string.resolution)) { navController.popBackStack() } }
-            item { MaterialGlassCard(header = stringResource(R.string.resolution)) { Text("FHD+", color = MaterialTheme.colorScheme.onSurface) } }
+            item { 
+                SubScreenHeader(title) { navController.popBackStack() } 
+            }
+            
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(300.dp)
+                        .clip(RoundedCornerShape(28.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), RoundedCornerShape(28.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(80.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Build, // Standard construction/dev icon
+                                contentDescription = null,
+                                modifier = Modifier.size(40.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = stringResource(R.string.feature_coming_soon),
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                text = stringResource(R.string.feature_under_dev),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }

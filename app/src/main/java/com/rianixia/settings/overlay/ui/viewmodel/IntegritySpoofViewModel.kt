@@ -59,6 +59,7 @@ data class IntegritySpoofState(
     val resolvedPackages: Map<String, ResolvedPackage> = emptyMap(),
     val installedApps: List<InstalledAppInfo> = emptyList(),
     
+    val showImportError: Boolean = false,
     val isLoading: Boolean = true
 )
 
@@ -273,11 +274,14 @@ class IntegritySpoofViewModel(application: Application) : AndroidViewModel(appli
                 }
             } catch (e: Exception) {
                 Log.e("IntegrityViewModel", "Import failed", e)
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(getApplication(), "Invalid JSON file", Toast.LENGTH_SHORT).show()
-                }
+                // Trigger the error dialog state instead of a simple toast
+                _uiState.update { it.copy(showImportError = true) }
             }
         }
+    }
+
+    fun dismissImportError() {
+        _uiState.update { it.copy(showImportError = false) }
     }
 
     fun resetToTemplate() {

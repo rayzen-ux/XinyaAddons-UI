@@ -158,7 +158,7 @@ fun CpuControlScreen(
 
             // AppBar
             GradientBlurAppBar(
-                title = stringResource(R.string.cpu_controller),
+                title = stringResource(R.string.cpu_control_title),
                 icon = Icons.Rounded.Memory,
                 onBackClick = { navController.popBackStack() },
                 hazeState = hazeState,
@@ -458,7 +458,7 @@ private fun AdvancedHeader(
                 Icon(Icons.Rounded.Memory, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    "$coreCount Cores Detected",
+                    stringResource(R.string.cpu_cores_detected_fmt, coreCount),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -467,7 +467,7 @@ private fun AdvancedHeader(
             GlassDropdown(
                 label = "",
                 options = globalGovs,
-                selectedOption = "Change All Govs",
+                selectedOption = stringResource(R.string.cpu_change_all_govs),
                 onOptionSelected = onGlobalGovChange,
                 itemLabelMapper = { it.uppercase() },
                 color = color,
@@ -487,6 +487,8 @@ private fun ClusterConfigCard(
     color: Color,
     hazeState: HazeState
 ) {
+    val context = LocalContext.current
+    
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -509,7 +511,7 @@ private fun ClusterConfigCard(
             Column {
                 Text(state.cluster.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Text(
-                    "Cores: ${state.cluster.cores.joinToString(", ")}",
+                    stringResource(R.string.cpu_cluster_cores_fmt, state.cluster.cores.joinToString(", ")),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -536,7 +538,7 @@ private fun ClusterConfigCard(
             options = state.validMaxOptions.sortedDescending(),
             selectedOption = state.currentMax,
             onOptionSelected = { onFreqChange(true, it) },
-            itemLabelMapper = { "${it / 1000} MHz" },
+            itemLabelMapper = { context.getString(R.string.cpu_freq_mhz_fmt, it / 1000) },
             enabled = !isSaverActive,
             color = color,
             hazeState = hazeState
@@ -549,7 +551,7 @@ private fun ClusterConfigCard(
             options = state.validMinOptions.sortedDescending(),
             selectedOption = state.currentMin,
             onOptionSelected = { onFreqChange(false, it) },
-            itemLabelMapper = { "${it / 1000} MHz" },
+            itemLabelMapper = { context.getString(R.string.cpu_freq_mhz_fmt, it / 1000) },
             enabled = !isSaverActive,
             color = MaterialTheme.colorScheme.secondary,
             hazeState = hazeState
@@ -573,7 +575,7 @@ private fun SectionTitle(title: String) {
 private fun TechnicalFooter(isAdvanced: Boolean) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = if (isAdvanced) "Manual Override Active." else stringResource(R.string.cpu_footer_simple),
+            text = if (isAdvanced) stringResource(R.string.cpu_manual_override_active) else stringResource(R.string.cpu_footer_simple),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.outline
         )
@@ -584,19 +586,19 @@ private fun TechnicalFooter(isAdvanced: Boolean) {
 private fun CpuInfoDialog(onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.cpu_controller)) },
+        title = { Text(stringResource(R.string.cpu_control_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Manage CPU frequencies and governors to balance performance and battery life.", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.cpu_info_desc), style = MaterialTheme.typography.bodyMedium)
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                Text("Simple Mode:", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                Text("Applies global settings tailored for general usage scenarios.", style = MaterialTheme.typography.bodySmall)
-                Text("Advanced Mode:", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                Text("Granular control per CPU cluster. Recommended for experienced users.", style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(R.string.cpu_info_simple_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.cpu_info_simple_desc), style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(R.string.cpu_info_advanced_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.cpu_info_advanced_desc), style = MaterialTheme.typography.bodySmall)
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Got it") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.btn_got_it)) }
         },
         containerColor = MaterialTheme.colorScheme.surface
     )

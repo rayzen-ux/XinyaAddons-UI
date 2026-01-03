@@ -108,7 +108,7 @@ fun IoSchedulerScreen(
                                     Icon(Icons.Rounded.TipsAndUpdates, null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(14.dp))
                                     Spacer(Modifier.width(8.dp))
                                     Text(
-                                        "Recommended: 'none' or 'mq-deadline' for modern storage.",
+                                        stringResource(R.string.io_sched_recommendation),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.tertiary
                                     )
@@ -124,11 +124,11 @@ fun IoSchedulerScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text("Global Status", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
+                                    Text(stringResource(R.string.io_global_status), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
                                     if (state.isMixedState) {
-                                        StatusChip(text = "MIXED", color = warningColor)
+                                        StatusChip(text = stringResource(R.string.status_mixed), color = warningColor)
                                     } else {
-                                        StatusChip(text = "SYNCED", color = primaryColor)
+                                        StatusChip(text = stringResource(R.string.status_synced), color = primaryColor)
                                     }
                                 }
                             }
@@ -137,7 +137,7 @@ fun IoSchedulerScreen(
                         // 3. Dynamic Block Device List
                         item {
                             Text(
-                                "DETECTED BLOCK MAP",
+                                stringResource(R.string.io_block_map),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Black,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
@@ -150,7 +150,7 @@ fun IoSchedulerScreen(
                             item {
                                 Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
                                     Text(
-                                        "No physical storage devices found.\n(Virtual devices hidden)",
+                                        stringResource(R.string.io_no_devices),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.outline,
                                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -193,7 +193,7 @@ fun IoSchedulerScreen(
                             .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f), CircleShape)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Icon(Icons.Rounded.QuestionMark, "Info", modifier = Modifier.size(20.dp))
+                            Icon(Icons.Rounded.QuestionMark, stringResource(R.string.info), modifier = Modifier.size(20.dp))
                         }
                     }
                 }
@@ -224,7 +224,7 @@ private fun WarningBanner(color: Color) {
         Icon(Icons.Rounded.WarningAmber, null, tint = color, modifier = Modifier.size(24.dp))
         Spacer(Modifier.width(16.dp))
         Text(
-            "Changing the I/O Scheduler may impact system stability or data integrity. If you notice lags or freezes, revert to Default.",
+            stringResource(R.string.io_warning_msg),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -272,7 +272,7 @@ private fun DeviceBlockCard(
         
         // Status
         Column(horizontalAlignment = Alignment.End) {
-            Text("ACTIVE", style = MaterialTheme.typography.labelSmall, fontSize = 8.sp, color = MaterialTheme.colorScheme.outline)
+            Text(stringResource(R.string.status_active_caps), style = MaterialTheme.typography.labelSmall, fontSize = 8.sp, color = MaterialTheme.colorScheme.outline)
             Text(currentScheduler, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = color)
         }
     }
@@ -298,28 +298,28 @@ private fun IoInfoDialog(onDismiss: () -> Unit) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Rounded.Storage, null, tint = MaterialTheme.colorScheme.primary)
                 Spacer(Modifier.width(12.dp))
-                Text("I/O Scheduler Guide") 
+                Text(stringResource(R.string.io_guide_title)) 
             }
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    "The I/O Scheduler decides the order in which storage read/write requests are processed. Choosing the right one can improve responsiveness or battery life.",
+                    stringResource(R.string.io_guide_desc),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                 
-                Text("Common Types:", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.io_common_types), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                 
-                BulletPoint("Noop / None", "Basic FIFO. Best for modern Flash Storage (UFS/NVMe) as the hardware handles sorting.")
-                BulletPoint("MQ-Deadline", "Prioritizes read requests to prevent lag. Good general purpose.")
-                BulletPoint("BFQ", "Complex scheduler for HDDs/slow storage. High overhead but good fairness.")
+                BulletPoint(stringResource(R.string.io_type_noop), stringResource(R.string.io_desc_noop))
+                BulletPoint(stringResource(R.string.io_type_mq), stringResource(R.string.io_desc_mq))
+                BulletPoint(stringResource(R.string.io_type_bfq), stringResource(R.string.io_desc_bfq))
                 
                 Spacer(Modifier.height(8.dp))
                 
                 Text(
-                    "Recommendation: If unsure, select 'none' or 'mq-deadline' (Default).",
+                    stringResource(R.string.io_guide_footer),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.tertiary,
                     fontWeight = FontWeight.Bold
@@ -327,7 +327,7 @@ private fun IoInfoDialog(onDismiss: () -> Unit) {
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Understood") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.btn_understand)) }
         },
         containerColor = MaterialTheme.colorScheme.surface
     )

@@ -375,18 +375,24 @@ fun MaterialGlassCard(
     modifier: Modifier = Modifier,
     header: String? = null,
     onClick: (() -> Unit)? = null,
+    containerColor: Color? = null,
+    borderColor: Color? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val shape = RoundedCornerShape(28.dp)
+    
+    // Determine effective colors with defaults
+    val effectiveContainer = containerColor ?: colorScheme.surfaceVariant.copy(alpha = 0.5f)
+    val effectiveBorder = borderColor ?: colorScheme.outlineVariant.copy(alpha = 0.3f)
     
     Box(
         modifier = modifier
             .fillMaxWidth()
             .let { if (onClick != null) it.clickable { onClick() } else it }
             .frostedGlass(
-                backgroundColor = colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                borderColor = colorScheme.outlineVariant.copy(alpha = 0.3f),
+                backgroundColor = effectiveContainer,
+                borderColor = effectiveBorder,
                 shape = shape
             )
     ) {

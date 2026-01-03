@@ -1,12 +1,25 @@
 <resources>
     <string name="app_name">Xia\'s Addons</string>
-    <string name="app_title_toolkit">.method getAddons</string>
+    <string name="app_title_toolkit">Xinya Toolkit</string>
 
     <string name="nav_home">Home</string>
     <string name="nav_perf">Performance</string>
     <string name="nav_sys">System</string>
     <string name="back">Back</string>
     <string name="info">Info</string>
+    <string name="btn_got_it">Got it</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="btn_save">Save</string>
+    <string name="btn_understand">Understood</string>
+    <string name="btn_ok">OK</string>
+
+    <string name="btn_reset">Reset</string>
+    <string name="btn_import">Import</string>
+    <string name="btn_export">Export</string>
+    <string name="btn_new_profile">New Profile</string>
+    <string name="btn_add_app">Add App</string>
+    <string name="btn_delete_profile">Delete Profile</string>
+    <string name="btn_update_now">Update Now</string>
 
     <string name="system_operational">Dashboard</string>
     <string name="ac_power_source">AC Input</string>
@@ -56,16 +69,62 @@
     <string name="cpu_eem_offsets">CPU Offsets</string>
     <string name="little_core">Little Core</string>
     <string name="unit_mv">" mV"</string>
-    <string name="io_scheduler_title">I/O Scheduler</string>
     <string name="active_scheduler">Active Scheduler</string>
     <string name="azenith_boost">AZenith Boost</string>
     <string name="active_profiles">Active Profiles</string>
+    <string name="cpu_mode_simple">Simple</string>
+    <string name="cpu_mode_advanced">Advanced</string>
+    <string name="cpu_section_profiles">Quick Profiles</string>
+    <string name="cpu_section_global">Global Scaling</string>
+    <string name="cpu_preset_perf">Performance</string>
+    <string name="cpu_preset_balance">Balanced</string>
+    <string name="cpu_preset_power">Battery</string>
+    <string name="cpu_gov_title">Governor</string>
+    <string name="btn_change">Change</string>
+    <string name="cpu_freq_cap">Frequency Cap</string>
+    <string name="cpu_ultra_saver">Ultra Battery Saver</string>
+    <string name="cpu_ultra_saver_desc">Locks frequency to 50% and forces powersave governor.</string>
+    <string name="cpu_advanced_warning">Advanced Mode active. Improper settings may cause instability.</string>
+    <string name="cpu_label_max">Maximum</string>
+    <string name="cpu_label_min">Minimum</string>
+    <string name="cpu_footer_simple">System manages detailed frequencies automatically.</string>
+    <string name="cpu_footer_advanced">AIO Controller Override Active.</string>
+    <string name="cpu_change_all_govs">Change All Govs</string>
+    <string name="cpu_cluster_cores_fmt">Cores: %1$s</string>
+    <string name="cpu_freq_mhz_fmt">%1$d MHz</string>
+    <string name="cpu_manual_override_active">Manual Override Active.</string>
+    <string name="cpu_info_desc">Manage CPU frequencies and governors to balance performance and battery life.</string>
+    <string name="cpu_info_simple_title">Simple Mode:</string>
+    <string name="cpu_info_simple_desc">Applies global settings tailored for general usage scenarios.</string>
+    <string name="cpu_info_advanced_title">Advanced Mode:</string>
+    <string name="cpu_info_advanced_desc">Granular control per CPU cluster. Recommended for experienced users.</string>
+    <string name="cpu_cores_detected_fmt">%1$d Cores Detected</string>
+
+    <string name="io_scheduler_title">I/O Scheduler</string>
+    <string name="io_warning_msg">Changing the I/O Scheduler may impact system stability or data integrity. If you notice lags or freezes, revert to Default.</string>
+    <string name="io_guide_title">I/O Scheduler Guide</string>
+    <string name="io_guide_desc">The I/O Scheduler decides the order in which storage read/write requests are processed. Choosing the right one can improve responsiveness or battery life.</string>
+    <string name="io_common_types">Common Types:</string>
+    <string name="io_type_noop">Noop / None</string>
+    <string name="io_desc_noop">Basic FIFO. Best for modern Flash Storage (UFS/NVMe) as the hardware handles sorting.</string>
+    <string name="io_type_mq">MQ-Deadline</string>
+    <string name="io_desc_mq">Prioritizes read requests to prevent lag. Good general purpose.</string>
+    <string name="io_type_bfq">BFQ</string>
+    <string name="io_desc_bfq">Complex scheduler for HDDs/slow storage. High overhead but good fairness.</string>
+    <string name="io_guide_footer">Recommendation: If unsure, select \'none\' or \'mq-deadline\' (Default).</string>
+    <string name="io_sched_recommendation">Recommended: \'none\' or \'mq-deadline\' for modern storage.</string>
+    <string name="io_global_status">Global Status</string>
+    <string name="io_block_map">DETECTED BLOCK MAP</string>
+    <string name="io_no_devices">No physical storage devices found.\n(Virtual devices hidden)</string>
+    <string name="status_mixed">MIXED</string>
+    <string name="status_synced">SYNCED</string>
+    <string name="status_active_caps">ACTIVE</string>
 
     <string name="system_core">System Settings</string>
-    <string name="hardware_matrix">Hardware</string>
-    <string name="id_matrix_label">Identity</string>
-    <string name="identity_spoofing">Identity &amp; Spoofing</string>
-    <string name="identity_desc">Play Integrity · Props · Netflix</string>
+    <string name="hardware_matrix">Software</string>
+    <string name="id_matrix_label">Misc</string>
+    <string name="identity_spoofing">Integrity &amp; Spoofing</string>
+    <string name="identity_desc">FPS Unlocker · Spoof · Netflix</string>
     <string name="vis_fx">Visuals</string>
     <string name="halo_light">HaloLight</string>
     <string name="disp_cfg">Display</string>
@@ -74,17 +133,50 @@
     <string name="thermal">Thermal</string>
     <string name="pwr_src">Power</string>
     <string name="battery">Battery</string>
-    <string name="kernel_flags">Kernel Flags</string>
-    <string name="secure_flag">Secure Flag</string>
-    <string name="secure_flag_desc">Allow screenshots in restricted apps</string>
-    <string name="force_rotation">Force Rotation</string>
-    <string name="force_rotation_desc">Hide navbar rotation button</string>
+    
+    <string name="feature_coming_soon">Coming Soon</string>
+    <string name="feature_under_dev">This feature is currently\nunder development.</string>
+
+    <string name="sys_tuner_title">SystemUI Tuner</string>
+    <string name="sys_flag_secure_title">Disable Flag Secure</string>
+    <string name="sys_flag_secure_desc">Allows screenshots and screen recording in secure applications and windows.</string>
+    <string name="sys_rotation_title">Floating Rotation Button</string>
+    <string name="sys_rotation_desc">Force enables the contextual rotation button in the navigation bar when rotated.</string>
 
     <string name="spoof_dashboard">Identity Spoofing</string>
-    <string name="pif_title">Play Integrity Fix (PIF)</string>
-    <string name="auto_update_pif">Auto-Update PIF</string>
-    <string name="danda_updater">Danda\'s auto-json updater</string>
-    <string name="preview">Preview</string>
+    <string name="pif_section_title">Play Integrity Fix</string>
+    <string name="pif_enable_title">Enable PIF Module</string>
+    <string name="pif_enable_desc">Injects integrity fix props</string>
+    <string name="pif_auto_update">Auto-Update</string>
+    <string name="pif_active_fmt">Active: %1$s</string>
+    <string name="pif_mode_reboot">On Reboot</string>
+    <string name="pif_mode_periodic">Periodic</string>
+    <string name="pif_updating">Updating...</string>
+    <string name="pif_update_now">Update PIF Fingerprint Now</string>
+    
+    <string name="spoof_general_title">General Spoofing</string>
+    <string name="spoof_photos_title">Google Photos Unlimited</string>
+    <string name="spoof_photos_desc">Spoofs device as Pixel for unlimited original quality backup</string>
+    <string name="spoof_netflix_title">Netflix HDR Unlock</string>
+    <string name="spoof_netflix_desc">Spoofs model for Widevine L1/HDR</string>
+    
+    <string name="spoof_game_title">Game Props Spoof</string>
+    <string name="spoof_game_desc">Per-app device spoof to unlock features and game graphics</string>
+    <string name="spoof_identity_header">DEVICE IDENTITY (SYSTEM PROPS)</string>
+    <string name="spoof_target_header">TARGET APPLICATIONS</string>
+    <string name="spoof_no_apps">No apps targeted. This profile is inactive.</string>
+    
+    <string name="prop_brand">BRAND</string>
+    <string name="prop_manufacturer">MANUFACTURER</string>
+    <string name="prop_model">MODEL</string>
+    <string name="prop_device">DEVICE</string>
+
+    <string name="dialog_import_failed_title">Import Failed</string>
+    <string name="dialog_import_failed_msg">Failed to parse data, is the file you imported correct?</string>
+    <string name="dialog_new_profile_title">New Device Profile</string>
+    <string name="dialog_new_profile_hint">Profile ID (e.g. GT20Pro)</string>
+    <string name="dialog_select_app">Select Application</string>
+    <string name="dialog_search">Search</string>
 
     <string name="thermal_engine">Thermal Engine</string>
     <string name="throttle_threshold">Throttle Threshold</string>
@@ -107,9 +199,7 @@
     <string name="dialog_high_temp_title">High Temperature Risk</string>
     <string name="dialog_high_temp_msg">Setting the throttle limit above 50°C may cause the device to become uncomfortable to hold and could degrade battery life faster.\n\nAre you sure you want to proceed?</string>
     <string name="btn_allow_high_temp">Allow >50°C</string>
-    <string name="btn_cancel">Cancel</string>
     <string name="btn_disable">Disable</string>
-    <string name="btn_got_it">Got it</string>
 
     <string name="dialog_info_title">Thermal Profiles</string>
     <string name="info_os_title">OS Default</string>
@@ -154,7 +244,6 @@
     <string name="btn_load_recommended">Load Recommended Values</string>
     <string name="uv_gpu_settings_title">GPU SETTINGS</string>
     <string name="uv_gpu_warning">GPU undervolting often leads to visual artifacts, driver crashes, and system instability. Proceed with caution.</string>
-    <string name="btn_save">Save</string>
     
     <string name="dialog_uv_advanced_title">Enable Advanced Mode?</string>
     <string name="dialog_uv_advanced_msg">You are about to unlock unsafe voltage ranges.\n\nApplying incorrect values can cause bootloops, data loss, or hardware instability.\n\nThe developer is NOT responsible for any damage caused by using this feature.</string>
@@ -162,7 +251,6 @@
     
     <string name="dialog_uv_stage1_title">Instability Warning</string>
     <string name="dialog_uv_stage1_msg">Offsets lower than -50 mV pose a significant risk of random reboots and freezes.</string>
-    <string name="btn_understand">I Understand</string>
     
     <string name="dialog_uv_stage2_title">HARDWARE DAMAGE RISK</string>
     <string name="dialog_uv_stage2_msg">You are applying extreme values.\n\nThis may cause permanent hardware damage, filesystem corruption, or bootloops.\n\nTHE DEVELOPER IS NOT RESPONSIBLE for any damage to your device.</string>
@@ -210,22 +298,34 @@
     <string name="az_engine_active">Engine Active</string>
     <string name="az_engine_offline">Engine Offline</string>
     <string name="az_tag_recommended">Recommended</string>
-    <string name="cpu_controller">CPU Controller</string>
-    <string name="cpu_mode_simple">Simple</string>
-    <string name="cpu_mode_advanced">Advanced</string>
-    <string name="cpu_section_profiles">Quick Profiles</string>
-    <string name="cpu_section_global">Global Scaling</string>
-    <string name="cpu_preset_perf">Performance</string>
-    <string name="cpu_preset_balance">Balanced</string>
-    <string name="cpu_preset_power">Battery</string>
-    <string name="cpu_gov_title">Governor</string>
-    <string name="btn_change">Change</string>
-    <string name="cpu_freq_cap">Frequency Cap</string>
-    <string name="cpu_ultra_saver">Ultra Battery Saver</string>
-    <string name="cpu_ultra_saver_desc">Locks frequency to 50% and forces powersave governor.</string>
-    <string name="cpu_advanced_warning">Advanced Mode active. Improper settings may cause instability.</string>
-    <string name="cpu_label_max">Maximum</string>
-    <string name="cpu_label_min">Minimum</string>
-    <string name="cpu_footer_simple">System manages detailed frequencies automatically.</string>
-    <string name="cpu_footer_advanced">AIO Controller Override Active.</string>
+    <string name="menu_settings">Settings</string>
+    <string name="menu_about">About</string>
+
+    <string name="about_title">About</string>
+    <string name="about_app_desc">Xia\'s Addons is a powerful toolkit designed to unlock the full potential of your device. It bridges the gap between complex system modifications and user-friendly control, offering granular management of hardware resources.</string>
+    
+    <string name="about_features_header">KEY FEATURES</string>
+    <string name="about_feat_perf">Performance Profiling</string>
+    <string name="about_feat_perf_desc">Advanced CPU/GPU frequency scaling and governor management.</string>
+    <string name="about_feat_identity">Identity Spoofing</string>
+    <string name="about_feat_identity_desc">Bypass Play Integrity checks and unlock app-specific features.</string>
+    <string name="about_feat_power">Power Management</string>
+    <string name="about_feat_power_desc">Bypass charging and thermal safety controls.</string>
+
+    <string name="about_safety_header">SAFETY &amp; DEFAULTS</string>
+    <string name="about_safety_title">Why Defaults Matter</string>
+    <string name="about_safety_desc">The default configurations are tuned for stability and safety. Advanced modules like Undervolting and Thermal overrides are powerful but risky. We recommend sticking to the "Balanced" profiles unless you understand the hardware implications.</string>
+
+    <string name="about_credits_header">DEVELOPMENT</string>
+    <string name="about_dev_role">Creator &amp; Lead Developer</string>
+    <string name="about_dev_name">@rianixia</string>
+    <string name="about_github_title">Source Code</string>
+    <string name="about_github_handle">GitHub: ryanistr</string>
+    
+    <string name="about_update_header">UPDATES</string>
+    <string name="about_check_updates">Check for Updates</string>
+    <string name="about_version_fmt">Version %1$s</string>
+    <string name="about_up_to_date">You are on the latest version.</string>
+
+    <string name="settings_title">App Settings</string>
 </resources>

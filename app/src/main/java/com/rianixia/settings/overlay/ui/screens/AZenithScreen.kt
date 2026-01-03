@@ -54,9 +54,10 @@ fun AZenithScreen(
     val state by viewModel.uiState.collectAsState()
     var showInfoDialog by remember { mutableStateOf(false) }
     
-    var cpuFreqLimit by remember { mutableFloatStateOf(100f) }
-    var dndGaming by remember { mutableStateOf(false) }
-    var aggrMemClean by remember { mutableStateOf(false) }
+    // Local state for immediate UI feedback, synced with ViewModel
+    var cpuFreqLimit by remember(state.cpuFreqLimit) { mutableFloatStateOf(state.cpuFreqLimit) }
+    var dndGaming by remember(state.isDndEnabled) { mutableStateOf(state.isDndEnabled) }
+    var aggrMemClean by remember(state.isMemCleanEnabled) { mutableStateOf(state.isMemCleanEnabled) }
 
     val context = LocalContext.current
     var recommendedPackages by remember { mutableStateOf<Set<String>>(emptySet()) }
@@ -142,7 +143,10 @@ fun AZenithScreen(
                                 title = stringResource(R.string.az_freq_title),
                                 desc = stringResource(R.string.az_freq_desc),
                                 value = cpuFreqLimit,
-                                onValueChange = { cpuFreqLimit = it },
+                                onValueChange = { 
+                                    cpuFreqLimit = it
+                                    viewModel.setCpuLimit(it) 
+                                },
                                 range = 5f..100f,
                                 steps = 18,
                                 color = sliderColor,
@@ -155,7 +159,10 @@ fun AZenithScreen(
                                 isActive = dndGaming,
                                 color = MaterialTheme.colorScheme.tertiary,
                                 icon = Icons.Rounded.DoNotDisturb,
-                                onClick = { dndGaming = !dndGaming }
+                                onClick = { 
+                                    dndGaming = !dndGaming
+                                    viewModel.toggleDnd(dndGaming)
+                                }
                             )
                             
                             AZenithFeatureSwitch(
@@ -164,7 +171,10 @@ fun AZenithScreen(
                                 isActive = aggrMemClean,
                                 color = MaterialTheme.colorScheme.secondary,
                                 icon = Icons.Rounded.CleaningServices,
-                                onClick = { aggrMemClean = !aggrMemClean }
+                                onClick = { 
+                                    aggrMemClean = !aggrMemClean
+                                    viewModel.toggleMemClean(aggrMemClean)
+                                }
                             )
                         }
                     }
@@ -188,19 +198,13 @@ fun AZenithScreen(
                     } else {
                         items(displayApps, key = { it.packageName }) { app ->
                             val isRecommended = app.packageName in recommendedPackages
-                            val effectiveEnabled = if (isRecommended && !app.isEnabled) true else app.isEnabled
+                            // We do not auto-toggle; we just visualize recommendation.
                             
-                            if (isRecommended && !app.isEnabled) {
-                                LaunchedEffect(Unit) {
-                                    viewModel.toggleApp(app.packageName, true)
-                                }
-                            }
-
                             AppItemRow(
                                 label = app.label,
                                 pkg = app.packageName,
                                 icon = app.icon,
-                                isEnabled = effectiveEnabled,
+                                isEnabled = app.isEnabled,
                                 isGlobalEnabled = state.isGlobalEnabled,
                                 isRecommended = isRecommended,
                                 onToggle = { viewModel.toggleApp(app.packageName, it) }
@@ -403,17 +407,18 @@ private fun AZenithFeatureSwitch(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(100.dp)
+            .heightIn(min = 100.dp) // Allow dynamic expansion
             .frostedGlass(
                 backgroundColor = color.copy(alpha = bgAlpha),
                 borderColor = color.copy(alpha = borderAlpha),
                 shape = RoundedCornerShape(20.dp)
             )
             .clickable { onClick() }
-            .padding(16.dp)
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
     ) {
         Row(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxWidth(), // Fill width, height determined by content
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -427,7 +432,8 @@ private fun AZenithFeatureSwitch(
                 Spacer(Modifier.width(16.dp))
                 Column(verticalArrangement = Arrangement.Center) {
                     Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                    Text(desc, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    // Removed maxLines so text wraps properly on high DPI/small screens
+                    Text(desc, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
 
