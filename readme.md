@@ -1,114 +1,138 @@
-Rianixia Settings Overlay
+# 🎯 Rianixia Settings Overlay
 
-A powerful, system-level Android tweaking utility built with Kotlin and Jetpack Compose. This application provides granular control over hardware parameters, system performance, and device integrity settings, designed for advanced users and custom ROM environments.
+<div align="center">
 
-Description
+**A powerful, system-level Android tweaking utility for advanced users**
 
-Rianixia Settings Overlay is a comprehensive dashboard and control center for Android devices. It leverages root access to modify kernel and system parameters, offering features ranging from CPU frequency control to integrity spoofing. The application follows modern Android development practices, utilizing the MVVM architecture and Kotlin Coroutines for asynchronous system operations.
+[![Kotlin](https://img.shields.io/badge/Kotlin-1.9+-7F52FF?style=flat&logo=kotlin&logoColor=white)](https://kotlinlang.org)
+[![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-1.5+-4285F4?style=flat&logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
+[![Android](https://img.shields.io/badge/Android-8.0+-3DDC84?style=flat&logo=android&logoColor=white)](https://www.android.com)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Key Features:
+</div>
 
-System Dashboard: Real-time monitoring of CPU load, RAM usage, storage, and battery statistics.
+---
 
-CPU & Thermal Control: Adjust governors, frequencies, and thermal profiles.
+## 📖 Overview
 
-I/O Scheduler: Configure internal and external storage schedulers and read-ahead buffers.
+Rianixia Settings Overlay is a comprehensive dashboard and control center that provides granular control over hardware parameters, system performance, and device integrity settings. Built with modern Android development practices, it leverages root access to modify kernel and system parameters, offering a sleek Jetpack Compose interface for advanced users and custom ROM environments.
 
-Undervolt Utility: Fine-tune voltage settings for power efficiency (kernel dependent).
+## ✨ Key Features
 
-Integrity & Spoofing: Tools to manage Play Integrity verdicts and device fingerprint spoofing.
+### 📊 **System Dashboard**
+Real-time monitoring of CPU load, RAM usage, storage metrics, and battery statistics at a glance.
 
-Battery Center: Enforce Doze modes and manage background services for improved battery life.
+### ⚡ **CPU & Thermal Control**
+Adjust governors, frequencies, and thermal profiles to optimize performance or battery life.
 
-Game Optimization: Manage game-specific properties and performance profiles.
+### 💾 **I/O Scheduler Management**
+Configure internal and external storage schedulers with customizable read-ahead buffers.
 
-Tech Stack
+### 🔋 **Undervolt Utility**
+Fine-tune voltage settings for enhanced power efficiency (kernel support required).
 
-Language: Kotlin
+### 🛡️ **Integrity & Spoofing**
+Advanced tools to manage Play Integrity verdicts and device fingerprint spoofing.
 
-UI Framework: Jetpack Compose (Material Design 3)
+### 🔌 **Battery Center**
+Enforce aggressive Doze modes and manage background services for maximum battery longevity.
 
-Architecture: MVVM (Model-View-ViewModel)
+### 🎮 **Game Optimization**
+Manage game-specific properties and performance profiles for enhanced gaming experience.
 
-Concurrency: Kotlin Coroutines & Flow
+---
 
-Android Components: Services, BroadcastReceivers, Activities
+## 🏗️ Architecture
 
-Build System: Gradle
+**Built on solid foundations:**
 
-Project Structure
+- **Language:** Kotlin
+- **UI Framework:** Jetpack Compose with Material Design 3
+- **Architecture Pattern:** MVVM (Model-View-ViewModel)
+- **Concurrency:** Kotlin Coroutines & Flow
+- **Build System:** Gradle
 
-The project source code (src/main/java/com/rianixia/settings/overlay) is organized as follows:
+---
 
-ui/: Contains all Jetpack Compose UI code.
+## 📁 Project Structure
 
-screens/: Individual feature screens (e.g., CPUControlScreen, ThermalControlScreen, HomeScreen).
+```
+src/main/java/com/rianixia/settings/overlay/
+│
+├── 🎨 ui/
+│   ├── screens/          # Feature screens (CPU, Thermal, Home, etc.)
+│   ├── components/       # Reusable UI components
+│   └── theme/            # Application theming & colors
+│
+├── 🧠 viewmodel/         # State management & business logic
+│
+├── 📦 data/              # Repository layer for system operations
+│
+├── ⚙️ services/          # Background services (EnforceDozeService, etc.)
+│
+├── 🔐 security/          # Integrity & security management
+│
+└── 📄 assets/            # Configuration files (SoC, games, properties)
+```
 
-components/: Reusable UI elements (e.g., GlassComponents, BouncyLazyColumn).
+---
 
-theme/: Application theming and color definitions.
+## 🔧 Prerequisites
 
-viewmodel/: State holders for the UI, handling business logic and communicating with the data layer (e.g., CPUViewModel, IntegritySpoofViewModel).
+- **JDK:** Version 11 or 17
+- **Android Studio:** Koala or newer (recommended)
+- **Target SDK:** 34 (Android 14)
+- **Minimum SDK:** 26 (Android 8.0)
+- **Root Access:** Required (Magisk/KernelSU)
 
-data/: Repository layer responsible for fetching system data and executing shell commands (e.g., CPURepository, DeviceRepository).
+> ⚠️ **Important:** This application requires a rooted device to function, as it modifies system files and kernel parameters.
 
-services/: Background services, such as the EnforceDozeService.
+---
 
-security/: Modules related to device integrity and security management (IntegrityManager).
+## 🚀 Getting Started
 
-assets/: Configuration files for SoCs, game lists, and device properties (soclist.json, gamelist.txt).
+### Installation
 
-Prerequisites
-
-To build and run this project, you need:
-
-JDK: Version 11 or 17.
-
-Android Studio: Koala or newer recommended.
-
-Android SDK: Target SDK 34 (Android 14) / Min SDK 26 (Android 8.0).
-
-Root Access: The compiled application requires a rooted device (Magisk/KernelSU) to function correctly, as it modifies system files and kernel parameters.
-
-Installation
-
-Clone the repository:
-
-git clone [https://github.com/yourusername/rianixia-settings-overlay.git](https://github.com/yourusername/rianixia-settings-overlay.git)
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/rianixia-settings-overlay.git
 cd rianixia-settings-overlay
+```
 
+### Building
 
-Open in Android Studio:
-Open Android Studio and select "Open an existing project," pointing to the cloned directory.
-
-Sync Gradle:
-Allow Android Studio to download dependencies and sync the project.
-
-Building
-
-You can build the project using the Gradle wrapper included in the root directory.
-
-Build Debug APK:
-
+```bash
+# Build debug APK
 ./gradlew assembleDebug
 
-
-Run Tests:
-
+# Run tests
 ./gradlew test
 ./gradlew connectedAndroidTest
+```
 
+---
 
-Usage
+## ⚠️ Safety Warning
 
-After installing the APK on a rooted device:
+> **CAUTION:** This application modifies system-level configurations. Improper use of voltage control or CPU settings may cause system instability, thermal issues, or boot loops. 
+> 
+> **Always:**
+> - Create a backup before making changes
+> - Test settings incrementally
+> - Know how to access recovery mode
+> - Use at your own risk
 
-Grant Root Permissions when prompted upon first launch.
+---
 
-Navigate through the Home Dashboard to view system status.
+## 🤝 Contributing
 
-Use the Performance tab to adjust CPU, I/O, and Thermal settings.
+Contributions are welcome! Please feel free to submit issues, fork the repository, and create pull requests.
 
-Access the System tab for Integrity Spoofing and Battery optimizations.
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-Warning: This application modifies system-level configurations. Improper use of voltage control or CPU settings may cause system instability or boot loops. Use with caution.
+</div>
+```
