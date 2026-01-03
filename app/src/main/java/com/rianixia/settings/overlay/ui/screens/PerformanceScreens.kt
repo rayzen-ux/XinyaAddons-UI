@@ -112,7 +112,8 @@ fun CpuClusterCard(onClick: () -> Unit) {
         // Tech Background Grid
         Canvas(modifier = Modifier.fillMaxSize().alpha(0.05f)) {
             val step = 20.dp.toPx()
-            for (i in 0 until (size.width / step).toInt()) {
+            val count = (size.width / step).toInt()
+            for (i in 0 until count) {
                 drawLine(
                     color = color,
                     start = Offset(i * step, 0f),
@@ -328,41 +329,6 @@ fun IoSchedulerCard(onClick: () -> Unit) {
             }
             
             Icon(Icons.Rounded.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-    }
-}
-
-
-// ==========================================
-// SUB-SCREENS (Keep CPU/IO, DELETE Undervolt)
-// ==========================================
-
-@Composable
-fun CpuControlScreen(navController: NavController) {
-    MaterialGlassScaffold {
-        BouncyLazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(top = 80.dp, bottom = 16.dp, start = 16.dp, end = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            item { SubScreenHeader(stringResource(R.string.cpu_control_title)) { navController.popBackStack() } }
-            item { MaterialGlassCard(header = stringResource(R.string.governor_selection)) { Text("schedutil", color = MaterialTheme.colorScheme.primary) } }
-        }
-    }
-}
-
-// NOTE: The dummy UndervoltScreen function has been removed to avoid conflict.
-
-@Composable
-fun IoSchedulerScreen(navController: NavController) {
-    MaterialGlassScaffold {
-        BouncyLazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(top = 80.dp, bottom = 16.dp, start = 16.dp, end = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            item { SubScreenHeader(stringResource(R.string.io_scheduler_title)) { navController.popBackStack() } }
-            item { MaterialGlassCard(header = stringResource(R.string.active_scheduler)) { Text("mq-deadline", color = MaterialTheme.colorScheme.primary) } }
         }
     }
 }

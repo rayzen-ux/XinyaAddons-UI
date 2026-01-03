@@ -20,10 +20,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -46,6 +48,7 @@ fun Modifier.frostedGlass(
             Modifier.hazeEffect(
                 state = hazeState,
                 style = HazeStyle(
+                    backgroundColor = backgroundColor,
                     blurRadius = 24.dp,
                     tint = HazeTint(backgroundColor),
                     noiseFactor = 0.05f
@@ -69,6 +72,154 @@ fun Modifier.frostedGlass(
             )
         }
     }
+
+@Composable
+fun GradientBlurAppBar(
+    title: String,
+    icon: ImageVector,
+    onBackClick: () -> Unit,
+    hazeState: HazeState,
+    modifier: Modifier = Modifier,
+    addStatusBarPadding: Boolean = true,
+    actions: @Composable RowScope.() -> Unit = {}
+) {
+    val surface = MaterialTheme.colorScheme.surface
+    
+    // Multiple gradient layers to simulate progressive blur
+    val topGradient = Brush.verticalGradient(
+        colors = listOf(
+            surface.copy(alpha = 0.95f),
+            surface.copy(alpha = 0.7f),
+            Color.Transparent
+        )
+    )
+    
+    val midGradient = Brush.verticalGradient(
+        colors = listOf(
+            surface.copy(alpha = 0.6f),
+            surface.copy(alpha = 0.3f),
+            Color.Transparent
+        )
+    )
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(280.dp) // Extended height to cover more area
+    ) {
+        // Layer 1: Heavy blur at top (40% of extended height)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.4f)
+                .align(Alignment.TopCenter)
+                .hazeEffect(
+                    state = hazeState,
+                    style = HazeStyle(
+                        backgroundColor = Color.Transparent,
+                        blurRadius = 40.dp, // Stronger blur
+                        tint = HazeTint(Color.Transparent),
+                        noiseFactor = 0.02f
+                    )
+                )
+                .background(topGradient)
+        )
+        
+        // Layer 2: Medium blur at middle (65% of extended height)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.65f)
+                .align(Alignment.TopCenter)
+                .hazeEffect(
+                    state = hazeState,
+                    style = HazeStyle(
+                        backgroundColor = Color.Transparent,
+                        blurRadius = 24.dp, // Medium blur
+                        tint = HazeTint(Color.Transparent),
+                        noiseFactor = 0.02f
+                    )
+                )
+                .background(midGradient)
+        )
+        
+        // Layer 3: Light blur extending to bottom (full height)
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .hazeEffect(
+                    state = hazeState,
+                    style = HazeStyle(
+                        backgroundColor = Color.Transparent,
+                        blurRadius = 12.dp, // Light blur
+                        tint = HazeTint(Color.Transparent),
+                        noiseFactor = 0.02f
+                    )
+                )
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            surface.copy(alpha = 0.4f),
+                            surface.copy(alpha = 0.15f),
+                            Color.Transparent
+                        )
+                    )
+                )
+        )
+
+        // Content Layer
+        Row(
+            modifier = Modifier
+                .then(if (addStatusBarPadding) Modifier.statusBarsPadding() else Modifier)
+                .height(64.dp)
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                onClick = onBackClick,
+                shape = CircleShape,
+                shadowElevation = 8.dp,
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                contentColor = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier
+                    .size(40.dp)
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f), CircleShape)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Rounded.ArrowBack,
+                        contentDescription = "Back",
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp)
+            )
+
+            if (actions != {}) {
+                Spacer(modifier = Modifier.weight(1f))
+                actions()
+            }
+        }
+    }
+}
 
 @Composable
 fun MaterialGlassScaffold(content: @Composable BoxScope.() -> Unit) {
@@ -267,7 +418,7 @@ fun MaterialGlassBadge(text: String, containerColor: Color, contentColor: Color)
 
 @Composable
 fun MaterialDivider() {
-    Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), modifier = Modifier.padding(vertical = 8.dp))
+    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), modifier = Modifier.padding(vertical = 8.dp))
 }
 
 @Composable

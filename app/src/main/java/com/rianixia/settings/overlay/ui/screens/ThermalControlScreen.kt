@@ -16,6 +16,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -30,7 +31,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -46,6 +46,8 @@ import com.rianixia.settings.overlay.R
 import com.rianixia.settings.overlay.data.ThermalProfile
 import com.rianixia.settings.overlay.ui.components.*
 import com.rianixia.settings.overlay.ui.viewmodel.HomeViewModel
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeSource
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import kotlin.math.abs
@@ -119,6 +121,7 @@ fun ThermalControlScreen(
     var pendingProfile by remember { mutableStateOf<ThermalProfile?>(null) }
 
     val scope = rememberCoroutineScope()
+    val hazeState = remember { HazeState() }
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
@@ -167,173 +170,148 @@ fun ThermalControlScreen(
     }
 
     MaterialGlassScaffold {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-        ) {
-            Row(
+        Box(modifier = Modifier.fillMaxSize()) {
+            // Main Content Layer
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 20.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .fillMaxSize()
+                    .hazeSource(state = hazeState)
             ) {
-                Surface(
-                    onClick = { navController.popBackStack() },
-                    shape = CircleShape,
-                    shadowElevation = 8.dp,
-                    color = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Rounded.ArrowBack,
-                            contentDescription = stringResource(R.string.back)
-                        )
+                if (!isLoaded) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                     }
-                }
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                Text(
-                    text = stringResource(R.string.thermal_engine),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                
-                Spacer(modifier = Modifier.width(8.dp))
-
-                Icon(
-                    imageVector = Icons.Rounded.Thermostat, 
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
-                )
-
-                Spacer(modifier = Modifier.weight(1f))
-
-                Surface(
-                    onClick = { showInfoDialog = true },
-                    shape = CircleShape,
-                    shadowElevation = 8.dp,
-                    color = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Rounded.Info,
-                            contentDescription = stringResource(R.string.info)
-                        )
-                    }
-                }
-            }
-
-            if (!isLoaded) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                }
-            } else {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.SpaceBetween
-                ) {
-                    
-                    Spacer(Modifier.height(16.dp))
-                    ThermalReactor(
-                        currentTemp = state.batteryInfo.temperature.toInt(),
-                        throttleLimit = customLimit,
-                        activeProfile = activeProfile,
-                        color = animatedColor
-                    )
-                    
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 32.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                } else {
+                    // Standard LazyColumn (No Bounce)
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(top = 80.dp, bottom = 48.dp, start = 16.dp, end = 16.dp),
+                        verticalArrangement = Arrangement.SpaceBetween
                     ) {
-                        
-                        AnimatedVisibility(
-                            visible = activeProfile == ThermalProfile.CUSTOM,
-                            enter = slideInVertically { it / 2 } + fadeIn() + expandVertically(),
-                            exit = slideOutVertically { it / 2 } + fadeOut() + shrinkVertically()
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    stringResource(R.string.throttle_threshold),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                                    letterSpacing = 2.sp,
-                                    fontWeight = FontWeight.Black
-                                )
-                                Spacer(Modifier.height(12.dp))
-                                ThermalFuelRodSlider(
-                                    value = customLimit,
-                                    onValueChange = { newValue ->
-                                        if (newValue > 50 && !highTempAllowed) {
-                                            showHighTempWarning = true
-                                        } else {
-                                            updateCustomLimit(newValue)
-                                        }
-                                    },
-                                    range = 35..90,
+                        item {
+                            Spacer(Modifier.height(16.dp))
+                            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                                ThermalReactor(
+                                    currentTemp = state.batteryInfo.temperature.toInt(),
+                                    throttleLimit = customLimit,
+                                    activeProfile = activeProfile,
                                     color = animatedColor
                                 )
-                                Spacer(Modifier.height(24.dp))
                             }
                         }
 
-                        ThermalModeRail(
-                            activeProfile = activeProfile,
-                            onProfileSelected = { onProfileClicked(it) },
-                            activeColor = animatedColor
-                        )
+                        item {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 32.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                AnimatedVisibility(
+                                    visible = activeProfile == ThermalProfile.CUSTOM,
+                                    enter = slideInVertically { it / 2 } + fadeIn() + expandVertically(),
+                                    exit = slideOutVertically { it / 2 } + fadeOut() + shrinkVertically()
+                                ) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(
+                                            stringResource(R.string.throttle_threshold),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                            letterSpacing = 2.sp,
+                                            fontWeight = FontWeight.Black
+                                        )
+                                        Spacer(Modifier.height(12.dp))
+                                        ThermalFuelRodSlider(
+                                            value = customLimit,
+                                            onValueChange = { newValue ->
+                                                if (newValue > 50 && !highTempAllowed) {
+                                                    showHighTempWarning = true
+                                                } else {
+                                                    updateCustomLimit(newValue)
+                                                }
+                                            },
+                                            range = 35..90,
+                                            color = animatedColor
+                                        )
+                                        Spacer(Modifier.height(24.dp))
+                                    }
+                                }
+
+                                ThermalModeRail(
+                                    activeProfile = activeProfile,
+                                    onProfileSelected = { onProfileClicked(it) },
+                                    activeColor = animatedColor
+                                )
+                            }
+                        }
                     }
                 }
             }
-        }
-        
-        if (showInfoDialog) ThermalInfoDialog { showInfoDialog = false }
-        
-        if (showWarningDialog) {
-            ThermalWarningDialog(
-                onDismiss = { showWarningDialog = false }, 
-                onConfirm = { 
-                    pendingProfile?.let { updateProfile(it) }
-                    showWarningDialog = false 
+
+            // Header Layer
+            GradientBlurAppBar(
+                title = stringResource(R.string.thermal_engine),
+                icon = Icons.Rounded.Thermostat,
+                onBackClick = { navController.popBackStack() },
+                hazeState = hazeState,
+                modifier = Modifier.align(Alignment.TopCenter),
+                addStatusBarPadding = false,
+                actions = {
+                    Surface(
+                        onClick = { showInfoDialog = true },
+                        shape = CircleShape,
+                        shadowElevation = 8.dp,
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(48.dp).border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f), CircleShape)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Rounded.Info,
+                                contentDescription = stringResource(R.string.info)
+                            )
+                        }
+                    }
                 }
             )
         }
-        
-        if (showHighTempWarning) {
-            AlertDialog(
-                onDismissRequest = { showHighTempWarning = false },
-                icon = { Icon(Icons.Rounded.Thermostat, null, tint = MaterialTheme.colorScheme.error) },
-                title = { Text(stringResource(R.string.dialog_high_temp_title)) },
-                text = { Text(stringResource(R.string.dialog_high_temp_msg)) },
-                confirmButton = { 
-                    Button(
-                        onClick = { 
-                            highTempAllowed = true
-                            updateCustomLimit(50)
-                            showHighTempWarning = false 
-                        }, 
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                    ) { 
-                        Text(stringResource(R.string.btn_allow_high_temp)) 
-                    } 
-                },
-                dismissButton = { TextButton(onClick = { showHighTempWarning = false }) { Text(stringResource(R.string.btn_cancel)) } },
-                containerColor = MaterialTheme.colorScheme.surface,
-                tonalElevation = 6.dp
-            )
-        }
+    }
+
+    // Dialogs
+    if (showInfoDialog) ThermalInfoDialog { showInfoDialog = false }
+    
+    if (showWarningDialog) {
+        ThermalWarningDialog(
+            onDismiss = { showWarningDialog = false }, 
+            onConfirm = { 
+                pendingProfile?.let { updateProfile(it) }
+                showWarningDialog = false 
+            }
+        )
+    }
+    
+    if (showHighTempWarning) {
+        AlertDialog(
+            onDismissRequest = { showHighTempWarning = false },
+            icon = { Icon(Icons.Rounded.Thermostat, null, tint = MaterialTheme.colorScheme.error) },
+            title = { Text(stringResource(R.string.dialog_high_temp_title)) },
+            text = { Text(stringResource(R.string.dialog_high_temp_msg)) },
+            confirmButton = { 
+                Button(
+                    onClick = { 
+                        highTempAllowed = true
+                        updateCustomLimit(50)
+                        showHighTempWarning = false 
+                    }, 
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) { 
+                    Text(stringResource(R.string.btn_allow_high_temp)) 
+                } 
+            },
+            dismissButton = { TextButton(onClick = { showHighTempWarning = false }) { Text(stringResource(R.string.btn_cancel)) } },
+            containerColor = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp
+        )
     }
 }
 

@@ -35,8 +35,11 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.rianixia.settings.overlay.R
 import com.rianixia.settings.overlay.ui.components.BouncyLazyColumn
+import com.rianixia.settings.overlay.ui.components.GradientBlurAppBar
 import com.rianixia.settings.overlay.ui.components.MaterialGlassScaffold
 import com.rianixia.settings.overlay.ui.components.frostedGlass
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeSource
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import kotlin.math.roundToInt
@@ -51,7 +54,7 @@ import kotlinx.coroutines.withContext
 data class VoltageParam(
     val id: String,
     val propKey: String,
-    val labelRes: Int, // Changed to resource ID for localization
+    val labelRes: Int,
     val value: Int = 0
 )
 
@@ -140,6 +143,8 @@ fun UndervoltScreen(navController: NavController) {
     
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    // Initialize HazeState
+    val hazeState = remember { HazeState() }
     
     var pendingUpdate by remember { mutableStateOf<Pair<String, Int>?>(null) }
     
@@ -219,11 +224,9 @@ fun UndervoltScreen(navController: NavController) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .statusBarsPadding()
+                    // Apply hazeSource here
+                    .hazeSource(state = hazeState)
             ) {
-                // 1. Header (Static)
-                UndervoltHeader(navController, onInfoClick = { showInfoDialog = true })
-
                 if (!isLoaded) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
@@ -232,8 +235,9 @@ fun UndervoltScreen(navController: NavController) {
                     // MAIN CONTENT (Bouncy Scroll)
                     BouncyLazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 20.dp),
-                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                        // Adjusted top padding so content starts below header
+                        contentPadding = PaddingValues(top = 80.dp, bottom = 100.dp, start = 16.dp, end = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp) // Reduced spacing for compactness
                     ) {
                         item { Spacer(Modifier.height(4.dp)) }
 
@@ -288,7 +292,7 @@ fun UndervoltScreen(navController: NavController) {
                                 isAdvancedMode = state.isAdvancedMode,
                                 onValueChange = { onValueChangeAttempt(param.id, it) }
                             )
-                            Spacer(Modifier.height(16.dp))
+                            // Spacer removed for compact layout
                         }
 
                         // 6. GPU Clusters
@@ -327,7 +331,7 @@ fun UndervoltScreen(navController: NavController) {
 
                         item {
                             AnimatedVisibility(visible = state.isGpuSectionEnabled) {
-                                Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) { // Reduced spacing for compact GPU section
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -355,7 +359,7 @@ fun UndervoltScreen(navController: NavController) {
                                             isAdvancedMode = state.isAdvancedMode,
                                             onValueChange = { onValueChangeAttempt(param.id, it) }
                                         )
-                                        Spacer(Modifier.height(16.dp))
+                                        // Spacer removed for compact layout
                                     }
                                 }
                             }
@@ -368,6 +372,34 @@ fun UndervoltScreen(navController: NavController) {
                     }
                 }
             }
+
+            // [FIX] Updated GradientBlurAppBar usage: addStatusBarPadding = false
+            GradientBlurAppBar(
+                title = stringResource(R.string.undervolt),
+                icon = Icons.Rounded.Bolt,
+                onBackClick = { navController.popBackStack() },
+                hazeState = hazeState,
+                modifier = Modifier.align(Alignment.TopCenter),
+                addStatusBarPadding = false, // Critical fix for gap
+                actions = {
+                    Surface(
+                        onClick = { showInfoDialog = true },
+                        shape = CircleShape,
+                        shadowElevation = 8.dp,
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(40.dp).border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f), CircleShape)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Rounded.Info,
+                                contentDescription = stringResource(R.string.info),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                }
+            )
 
             // Save FAB (Only Visible when changes exist)
             AnimatedVisibility(
@@ -486,65 +518,6 @@ fun UndervoltScreen(navController: NavController) {
 // ==========================================
 // COMPONENTS
 // ==========================================
-
-@Composable
-private fun UndervoltHeader(navController: NavController, onInfoClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 20.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Surface(
-            onClick = { navController.popBackStack() },
-            shape = CircleShape,
-            shadowElevation = 8.dp,
-            color = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.size(48.dp)
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(Icons.Rounded.ArrowBack, stringResource(R.string.back))
-            }
-        }
-
-        Spacer(Modifier.width(16.dp))
-
-        Text(
-            text = stringResource(R.string.undervolt),
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        
-        Spacer(Modifier.width(8.dp))
-
-        Icon(
-            imageVector = Icons.Rounded.Bolt,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(24.dp)
-        )
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        Surface(
-            onClick = onInfoClick,
-            shape = CircleShape,
-            shadowElevation = 8.dp,
-            color = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.size(48.dp)
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = Icons.Rounded.Info,
-                    contentDescription = stringResource(R.string.info)
-                )
-            }
-        }
-    }
-}
 
 @Composable
 private fun VoltageSectionHeader(text: String) {
@@ -718,8 +691,9 @@ private fun VoltageCard(
         modifier = Modifier
             .fillMaxWidth()
             .frostedGlass(
-                backgroundColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.2f),
-                borderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.1f),
+                // Enhanced background color and border for visibility ("pop")
+                backgroundColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f),
+                borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
                 shape = RoundedCornerShape(24.dp)
             )
             .padding(20.dp),

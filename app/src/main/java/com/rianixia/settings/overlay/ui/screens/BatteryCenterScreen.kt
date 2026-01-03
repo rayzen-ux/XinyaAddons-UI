@@ -46,6 +46,8 @@ import androidx.navigation.NavController
 import com.rianixia.settings.overlay.R
 import com.rianixia.settings.overlay.ui.components.*
 import com.rianixia.settings.overlay.ui.viewmodel.HomeViewModel
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeSource
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.roundToInt
@@ -74,131 +76,145 @@ fun BatteryCenterScreen(
         label = "themeColor"
     )
 
+    val hazeState = remember { HazeState() }
+
     MaterialGlassScaffold {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
+        Box(
+            modifier = Modifier.fillMaxSize()
         ) {
-            // 1. CUSTOM HEADER (Static)
-            Row(
+            // Main Content Layer
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 20.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .fillMaxSize()
+                    .hazeSource(state = hazeState)
             ) {
-                // Circular Back Button
-                Surface(
-                    onClick = { navController.popBackStack() },
-                    shape = CircleShape,
-                    shadowElevation = 8.dp,
-                    color = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(48.dp)
+                // MAIN CONTENT (Bouncy Scroll)
+                BouncyLazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(top = 80.dp, bottom = 100.dp, start = 16.dp, end = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Rounded.ArrowBack,
-                            contentDescription = stringResource(R.string.back)
-                        )
+                    // A. THE REACTOR
+                    item {
+                        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                            BatteryReactor(
+                                level = state.batteryInfo.levelPercent,
+                                isCharging = state.batteryInfo.isCharging,
+                                limitEnabled = state.chargingConfig.autoCutEnabled,
+                                limitValue = state.chargingConfig.autoCutLimit,
+                                color = animatedColor
+                            )
+                        }
                     }
-                }
 
-                Spacer(modifier = Modifier.width(16.dp))
-
-                // Header Text
-                Text(
-                    text = stringResource(R.string.power_matrix),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                
-                Spacer(modifier = Modifier.width(8.dp))
-
-                // Battery Icon (Decorative)
-                Icon(
-                    imageVector = Icons.Rounded.BatteryChargingFull, 
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
-                )
-
-                // Push Info Button to the far right
-                Spacer(modifier = Modifier.weight(1f))
-
-                // Circular Info Button
-                Surface(
-                    onClick = { showGuideDialog = true },
-                    shape = CircleShape,
-                    shadowElevation = 8.dp,
-                    color = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Rounded.Info,
-                            contentDescription = stringResource(R.string.info)
-                        )
-                    }
-                }
-            }
-
-            // 2. MAIN CONTENT (Bouncy Scroll)
-            BouncyLazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
-            ) {
-                // A. THE REACTOR
-                item {
-                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        BatteryReactor(
-                            level = state.batteryInfo.levelPercent,
-                            isCharging = state.batteryInfo.isCharging,
-                            limitEnabled = state.chargingConfig.autoCutEnabled,
-                            limitValue = state.chargingConfig.autoCutLimit,
+                    // B. DIAGNOSTIC RAIL
+                    item {
+                        DiagnosticRail(
+                            temp = state.batteryInfo.temperature,
+                            health = state.batteryInfo.health,
+                            tech = state.batteryInfo.technology,
                             color = animatedColor
                         )
                     }
-                }
 
-                // B. DIAGNOSTIC RAIL
-                item {
-                    DiagnosticRail(
-                        temp = state.batteryInfo.temperature,
-                        health = state.batteryInfo.health,
-                        tech = state.batteryInfo.technology,
-                        color = animatedColor
-                    )
-                }
+                    // C. STRATEGIES
+                    item {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            SectionHeader(stringResource(R.string.power_strategy))
 
-                // C. STRATEGIES
-                item {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        SectionHeader(stringResource(R.string.power_strategy))
+                            // 1. AUTO CUT
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                StrategyBreaker(
+                                    title = stringResource(R.string.guide_autocut_title),
+                                    status = if (state.chargingConfig.autoCutEnabled) stringResource(R.string.status_active) else stringResource(R.string.status_disabled),
+                                    desc = stringResource(R.string.guide_autocut_desc),
+                                    isActive = state.chargingConfig.autoCutEnabled,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    icon = Icons.Rounded.BatteryChargingFull,
+                                    onClick = { viewModel.setAutoCutEnabled(!state.chargingConfig.autoCutEnabled) }
+                                )
 
-                        // 1. AUTO CUT
-                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                AnimatedVisibility(
+                                    visible = state.chargingConfig.autoCutEnabled,
+                                    enter = expandVertically() + fadeIn(),
+                                    exit = shrinkVertically() + fadeOut()
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .frostedGlass(
+                                                backgroundColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+                                                borderColor = Color.Transparent,
+                                                shape = RoundedCornerShape(16.dp)
+                                            )
+                                            .padding(16.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(
+                                            stringResource(R.string.limit_charge_limit).uppercase(),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            letterSpacing = 2.sp,
+                                            fontWeight = FontWeight.Black
+                                        )
+                                        Spacer(Modifier.height(12.dp))
+                                        
+                                        ChargeLimitSlider(
+                                            value = state.chargingConfig.autoCutLimit,
+                                            onValueChange = { viewModel.setAutoCutLimit(it.toFloat()) },
+                                            range = 40..100,
+                                            color = animatedColor
+                                        )
+                                    }
+                                }
+                            }
+
+                            // 2. AC BYPASS
                             StrategyBreaker(
-                                title = stringResource(R.string.guide_autocut_title),
-                                status = if (state.chargingConfig.autoCutEnabled) stringResource(R.string.status_active) else stringResource(R.string.status_disabled),
-                                desc = stringResource(R.string.guide_autocut_desc),
-                                isActive = state.chargingConfig.autoCutEnabled,
-                                color = MaterialTheme.colorScheme.primary,
-                                icon = Icons.Rounded.BatteryChargingFull,
-                                onClick = { viewModel.setAutoCutEnabled(!state.chargingConfig.autoCutEnabled) }
+                                title = stringResource(R.string.strategy_bypass_title),
+                                status = if (state.chargingConfig.bypassEnabled) stringResource(R.string.status_active) else stringResource(R.string.status_disabled),
+                                desc = stringResource(R.string.strategy_bypass_desc),
+                                isActive = state.chargingConfig.bypassEnabled,
+                                color = MaterialTheme.colorScheme.tertiary,
+                                icon = Icons.Rounded.Bolt,
+                                onClick = { viewModel.setBypassEnabled(!state.chargingConfig.bypassEnabled) }
                             )
 
-                            AnimatedVisibility(
-                                visible = state.chargingConfig.autoCutEnabled,
-                                enter = expandVertically() + fadeIn(),
-                                exit = shrinkVertically() + fadeOut()
-                            ) {
+                            // 3. THERMAL CUTOFF
+                            StrategyBreaker(
+                                title = stringResource(R.string.strategy_thermal_title),
+                                status = if (state.chargingConfig.tempCutoffEnabled) stringResource(R.string.status_active) else stringResource(R.string.status_disabled),
+                                desc = stringResource(R.string.strategy_thermal_desc),
+                                isActive = state.chargingConfig.tempCutoffEnabled,
+                                color = MaterialTheme.colorScheme.error,
+                                icon = Icons.Rounded.Thermostat,
+                                onClick = { viewModel.setTempCutoffEnabled(!state.chargingConfig.tempCutoffEnabled) }
+                            )
+                        }
+                    }
+
+                    // D. DOZE MANAGER
+                    item {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            SectionHeader(stringResource(R.string.doze_title).uppercase())
+
+                            StrategyBreaker(
+                                title = stringResource(R.string.doze_title),
+                                status = if (state.enforceDozeConfig.isEnabled) stringResource(R.string.doze_status_running) else stringResource(R.string.doze_status_stopped),
+                                desc = stringResource(R.string.doze_desc),
+                                isActive = state.enforceDozeConfig.isEnabled,
+                                color = MaterialTheme.colorScheme.secondary,
+                                icon = Icons.Rounded.Bedtime,
+                                onClick = { viewModel.setEnforceDozeEnabled(!state.enforceDozeConfig.isEnabled) }
+                            )
+
+                            AnimatedVisibility(visible = state.enforceDozeConfig.isEnabled) {
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -208,135 +224,91 @@ fun BatteryCenterScreen(
                                             shape = RoundedCornerShape(16.dp)
                                         )
                                         .padding(16.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
+                                    verticalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
                                     Text(
-                                        stringResource(R.string.limit_charge_limit).uppercase(),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.primary,
-                                        letterSpacing = 2.sp,
-                                        fontWeight = FontWeight.Black
+                                        stringResource(R.string.doze_config_title),
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = MaterialTheme.colorScheme.secondary
                                     )
-                                    Spacer(Modifier.height(12.dp))
-                                    
-                                    ChargeLimitSlider(
-                                        value = state.chargingConfig.autoCutLimit,
-                                        onValueChange = { viewModel.setAutoCutLimit(it.toFloat()) },
-                                        range = 40..100,
-                                        color = animatedColor
-                                    )
-                                }
-                            }
-                        }
 
-                        // 2. AC BYPASS
-                        StrategyBreaker(
-                            title = stringResource(R.string.strategy_bypass_title),
-                            status = if (state.chargingConfig.bypassEnabled) stringResource(R.string.status_active) else stringResource(R.string.status_disabled),
-                            desc = stringResource(R.string.strategy_bypass_desc),
-                            isActive = state.chargingConfig.bypassEnabled,
-                            color = MaterialTheme.colorScheme.tertiary,
-                            icon = Icons.Rounded.Bolt,
-                            onClick = { viewModel.setBypassEnabled(!state.chargingConfig.bypassEnabled) }
-                        )
-
-                        // 3. THERMAL CUTOFF
-                        StrategyBreaker(
-                            title = stringResource(R.string.strategy_thermal_title),
-                            status = if (state.chargingConfig.tempCutoffEnabled) stringResource(R.string.status_active) else stringResource(R.string.status_disabled),
-                            desc = stringResource(R.string.strategy_thermal_desc),
-                            isActive = state.chargingConfig.tempCutoffEnabled,
-                            color = MaterialTheme.colorScheme.error,
-                            icon = Icons.Rounded.Thermostat,
-                            onClick = { viewModel.setTempCutoffEnabled(!state.chargingConfig.tempCutoffEnabled) }
-                        )
-                    }
-                }
-
-                // D. DOZE MANAGER
-                item {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        SectionHeader(stringResource(R.string.doze_title).uppercase())
-
-                        StrategyBreaker(
-                            title = stringResource(R.string.doze_title),
-                            status = if (state.enforceDozeConfig.isEnabled) stringResource(R.string.doze_status_running) else stringResource(R.string.doze_status_stopped),
-                            desc = stringResource(R.string.doze_desc),
-                            isActive = state.enforceDozeConfig.isEnabled,
-                            color = MaterialTheme.colorScheme.secondary,
-                            icon = Icons.Rounded.Bedtime,
-                            onClick = { viewModel.setEnforceDozeEnabled(!state.enforceDozeConfig.isEnabled) }
-                        )
-
-                        AnimatedVisibility(visible = state.enforceDozeConfig.isEnabled) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .frostedGlass(
-                                        backgroundColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
-                                        borderColor = Color.Transparent,
-                                        shape = RoundedCornerShape(16.dp)
-                                    )
-                                    .padding(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                Text(
-                                    stringResource(R.string.doze_config_title),
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = MaterialTheme.colorScheme.secondary
-                                )
-
-                                Column {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Text(
-                                            stringResource(R.string.doze_delay),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurface
-                                        )
-                                        Text(
-                                            "${state.enforceDozeConfig.delaySeconds}s",
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.onSurface
+                                    Column {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                stringResource(R.string.doze_delay),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                            Text(
+                                                "${state.enforceDozeConfig.delaySeconds}s",
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                        }
+                                        Slider(
+                                            value = state.enforceDozeConfig.delaySeconds.toFloat(),
+                                            onValueChange = { viewModel.setEnforceDozeDelay(it.toInt()) },
+                                            valueRange = 0f..300f,
+                                            steps = 29
                                         )
                                     }
-                                    Slider(
-                                        value = state.enforceDozeConfig.delaySeconds.toFloat(),
-                                        onValueChange = { viewModel.setEnforceDozeDelay(it.toInt()) },
-                                        valueRange = 0f..300f,
-                                        steps = 29
+                                    
+                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
+                                    SettingSwitch(
+                                        label = stringResource(R.string.doze_disable_sensors),
+                                        checked = state.enforceDozeConfig.disableSensors,
+                                        onCheckedChange = { viewModel.setEnforceDozeSensors(it) }
+                                    )
+                                    SettingSwitch(
+                                        label = stringResource(R.string.doze_disable_wifi),
+                                        checked = state.enforceDozeConfig.disableWifi,
+                                        onCheckedChange = { viewModel.setEnforceDozeWifi(it) }
+                                    )
+                                    SettingSwitch(
+                                        label = stringResource(R.string.doze_disable_data),
+                                        checked = state.enforceDozeConfig.disableData,
+                                        onCheckedChange = { viewModel.setEnforceDozeData(it) }
                                     )
                                 }
-                                
-                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-
-                                SettingSwitch(
-                                    label = stringResource(R.string.doze_disable_sensors),
-                                    checked = state.enforceDozeConfig.disableSensors,
-                                    onCheckedChange = { viewModel.setEnforceDozeSensors(it) }
-                                )
-                                SettingSwitch(
-                                    label = stringResource(R.string.doze_disable_wifi),
-                                    checked = state.enforceDozeConfig.disableWifi,
-                                    onCheckedChange = { viewModel.setEnforceDozeWifi(it) }
-                                )
-                                SettingSwitch(
-                                    label = stringResource(R.string.doze_disable_data),
-                                    checked = state.enforceDozeConfig.disableData,
-                                    onCheckedChange = { viewModel.setEnforceDozeData(it) }
-                                )
                             }
                         }
                     }
+                    
+                    item { Spacer(modifier = Modifier.height(48.dp)) }
                 }
-                
-                item { Spacer(modifier = Modifier.height(48.dp)) }
             }
+
+            // Header Layer
+            GradientBlurAppBar(
+                title = stringResource(R.string.power_matrix),
+                icon = Icons.Rounded.BatteryChargingFull,
+                onBackClick = { navController.popBackStack() },
+                hazeState = hazeState,
+                modifier = Modifier.align(Alignment.TopCenter),
+                addStatusBarPadding = false,
+                actions = {
+                    Surface(
+                        onClick = { showGuideDialog = true },
+                        shape = CircleShape,
+                        shadowElevation = 8.dp,
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(48.dp).border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f), CircleShape)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Rounded.Info,
+                                contentDescription = stringResource(R.string.info),
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+                }
+            )
         }
     }
 

@@ -31,6 +31,8 @@ import androidx.navigation.NavController
 import com.rianixia.settings.overlay.R
 import com.rianixia.settings.overlay.ui.components.*
 import com.rianixia.settings.overlay.ui.viewmodel.HomeViewModel
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeSource
 
 @Composable
 fun HomeScreen(
@@ -38,6 +40,7 @@ fun HomeScreen(
     viewModel: HomeViewModel = viewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
+    val hazeState = remember { HazeState() }
 
     val thermalColorTarget = when {
         state.thermalState.temperature > 45f -> MaterialTheme.colorScheme.error
@@ -52,106 +55,118 @@ fun HomeScreen(
     )
 
     MaterialGlassScaffold {
-        BouncyLazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(top = 100.dp, bottom = 120.dp, start = 16.dp, end = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
-            item {
-                SystemIdentityHeader(
-                    deviceName = state.deviceInfo.marketName,
-                    socName = state.deviceInfo.socName
-                )
-            }
-
-            item {
-                PowerRail(
-                    isCharging = state.batteryInfo.isCharging,
-                    uptime = state.uptime,
-                    deepSleep = state.deepSleep,
-                    batteryLevel = state.batteryInfo.levelPercent
-                )
-            }
-
-            item {
-                CpuFluxTerminal(
-                    graphPoints = state.cpuState.graphPoints,
-                    peakFreq = state.cpuState.peakFrequency,
-                    governor = state.cpuState.activeGovernor,
-                    onClick = { navController.navigate("cpu_control") }
-                )
-            }
-
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+        Box(Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .hazeSource(state = hazeState)
+            ) {
+                BouncyLazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(top = 100.dp, bottom = 120.dp, start = 16.dp, end = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
-                    TelemetryModule(
-                        modifier = Modifier.weight(1f),
-                        label = stringResource(R.string.pwr_cell),
-                        value = "${state.batteryInfo.levelPercent}%",
-                        subValue = state.batteryInfo.status,
-                        icon = Icons.Rounded.BatteryStd,
-                        color = if(state.batteryInfo.levelPercent < 20) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-                        onClick = { navController.navigate("battery_center") }
-                    ) {
-                        LinearProgressIndicator(
-                            progress = { state.batteryInfo.levelPercent / 100f },
-                            modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)),
-                            color = if(state.batteryInfo.levelPercent < 20) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-                            trackColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    item {
+                        SystemIdentityHeader(
+                            deviceName = state.deviceInfo.marketName,
+                            socName = state.deviceInfo.socName
                         )
                     }
 
-                    TelemetryModule(
-                        modifier = Modifier.weight(1f),
-                        label = stringResource(R.string.therm_sens),
-                        value = "${String.format("%.1f", state.thermalState.temperature)}°C",
-                        subValue = state.thermalState.summary,
-                        icon = Icons.Rounded.Thermostat,
-                        color = animatedThermalColor,
-                        onClick = { navController.navigate("thermal_control") }
-                    ) {
-                        val progress = ((state.thermalState.temperature - 20f) / 40f).coerceIn(0f, 1f)
-                        LinearProgressIndicator(
-                            progress = { progress },
-                            modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)),
-                            color = animatedThermalColor,
-                            trackColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    item {
+                        PowerRail(
+                            isCharging = state.batteryInfo.isCharging,
+                            uptime = state.uptime,
+                            deepSleep = state.deepSleep,
+                            batteryLevel = state.batteryInfo.levelPercent
                         )
                     }
-                }
-            }
 
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(
-                        stringResource(R.string.quick_protocols),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(start = 4.dp)
-                    )
-                    
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        QuickProtocolCard(
-                            title = stringResource(R.string.protocol_gaming),
-                            icon = Icons.Rounded.RocketLaunch,
-                            modifier = Modifier.weight(1f),
-                            color = MaterialTheme.colorScheme.tertiary,
-                            onClick = { navController.navigate("game_boost") }
+                    item {
+                        CpuFluxTerminal(
+                            graphPoints = state.cpuState.graphPoints,
+                            peakFreq = state.cpuState.peakFrequency,
+                            governor = state.cpuState.activeGovernor,
+                            onClick = { navController.navigate("cpu_control") } // Navigates to the new CPU Screen
                         )
-                        QuickProtocolCard(
-                            title = stringResource(R.string.protocol_efficiency),
-                            icon = Icons.Rounded.Eco,
-                            modifier = Modifier.weight(1f),
-                            color = MaterialTheme.colorScheme.secondary,
-                            onClick = { navController.navigate("undervolt") }
-                        )
+                    }
+
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            TelemetryModule(
+                                modifier = Modifier.weight(1f),
+                                label = stringResource(R.string.pwr_cell),
+                                value = "${state.batteryInfo.levelPercent}%",
+                                subValue = state.batteryInfo.status,
+                                icon = Icons.Rounded.BatteryStd,
+                                color = if(state.batteryInfo.levelPercent < 20) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                                onClick = { navController.navigate("battery_center") }
+                            ) {
+                                LinearProgressIndicator(
+                                    progress = { state.batteryInfo.levelPercent / 100f },
+                                    modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)),
+                                    color = if(state.batteryInfo.levelPercent < 20) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                                    trackColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                )
+                            }
+
+                            TelemetryModule(
+                                modifier = Modifier.weight(1f),
+                                label = stringResource(R.string.therm_sens),
+                                value = "${String.format("%.1f", state.thermalState.temperature)}°C",
+                                subValue = state.thermalState.summary,
+                                icon = Icons.Rounded.Thermostat,
+                                color = animatedThermalColor,
+                                onClick = { navController.navigate("thermal_control") }
+                            ) {
+                                val progress = ((state.thermalState.temperature - 20f) / 40f).coerceIn(0f, 1f)
+                                LinearProgressIndicator(
+                                    progress = { progress },
+                                    modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)),
+                                    color = animatedThermalColor,
+                                    trackColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                )
+                            }
+                        }
+                    }
+
+                    item {
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Text(
+                                stringResource(R.string.quick_protocols),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(start = 4.dp)
+                            )
+                            
+                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                QuickProtocolCard(
+                                    title = stringResource(R.string.protocol_gaming),
+                                    icon = Icons.Rounded.RocketLaunch,
+                                    modifier = Modifier.weight(1f),
+                                    color = MaterialTheme.colorScheme.tertiary,
+                                    onClick = { navController.navigate("azenith") } // Matches AZenith route
+                                )
+                                QuickProtocolCard(
+                                    title = stringResource(R.string.protocol_efficiency),
+                                    icon = Icons.Rounded.Eco,
+                                    modifier = Modifier.weight(1f),
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    onClick = { navController.navigate("undervolt") } // Matches Undervolt route
+                                )
+                            }
+                        }
                     }
                 }
             }
+            
+            // Note: HomeScreen typically doesn't have a standard App Bar or Back Button 
+            // as it is the root destination, but we add a glass header for identity if needed.
+            // For now, no AppBar on Home to keep the large IdentityHeader clean.
         }
     }
 }

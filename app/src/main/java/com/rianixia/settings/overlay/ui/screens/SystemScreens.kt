@@ -60,7 +60,8 @@ fun SystemScreen(navController: NavController) {
 
             // 2. Primary Module: Identity Matrix
             item {
-                IdentityMatrixCard(onClick = { navController.navigate("spoof_dashboard") })
+                // CHANGED: Navigates to the new Integrity & Spoofing screen
+                IdentityMatrixCard(onClick = { navController.navigate("integrity_spoofing") })
             }
 
             // 3. Hardware Grid (2x2)
@@ -287,20 +288,6 @@ fun SystemPropsBank() {
 // ==========================================
 // SUB-SCREENS
 // ==========================================
-
-@Composable
-fun SpoofDashboardScreen(navController: NavController) {
-    MaterialGlassScaffold {
-        BouncyLazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(top = 80.dp, bottom = 16.dp, start = 16.dp, end = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            item { SubScreenHeader(stringResource(R.string.spoof_dashboard)) { navController.popBackStack() } }
-            item { MaterialGlassCard(header = stringResource(R.string.pif_title)) { XinyaToggle(stringResource(R.string.auto_update_pif), stringResource(R.string.danda_updater), Icons.Rounded.Autorenew, true, {}) } }
-        }
-    }
-}
 
 @Composable
 fun HaloLightingScreen(navController: NavController) {

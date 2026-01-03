@@ -31,7 +31,7 @@ class SystemStateAggregator(private val context: Context) {
 
     init {
         startMonitoring()
-        updateEnforceDozeState() // Restore Doze State
+        updateEnforceDozeState()
     }
 
     private fun startMonitoring() {
@@ -70,9 +70,6 @@ class SystemStateAggregator(private val context: Context) {
         }
     }
 
-    // ==========================================
-    // ENFORCE DOZE LOGIC (Restored)
-    // ==========================================
     private fun updateEnforceDozeState() {
         val prefs = context.getSharedPreferences("enforce_doze_prefs", Context.MODE_PRIVATE)
         _state.update { 
@@ -113,7 +110,6 @@ class SystemStateAggregator(private val context: Context) {
         }
         editor.apply()
         
-        // Notify Service to reload
         if (prefs.getBoolean("service_enabled", false)) {
             val intent = Intent(context, EnforceDozeService::class.java)
             intent.action = EnforceDozeService.ACTION_RELOAD_SETTINGS
@@ -126,17 +122,12 @@ class SystemStateAggregator(private val context: Context) {
         updateEnforceDozeState()
     }
 
-    // ==========================================
-    // SYSTEM INFO LOGIC
-    // ==========================================
-
     private fun updateDeviceInfo() {
         val rawModel = Build.MODEL
         val board = Build.BOARD
         val hardware = Build.HARDWARE
         val manufacturer = Build.MANUFACTURER.replaceFirstChar { it.uppercase() }
 
-        // 1. Resolve Market Name
         val propName = getSystemProperty("ro.vendor.oplus.market.name")
             .ifEmpty { getSystemProperty("ro.vendor.oplus.market.ename") }
         
@@ -146,37 +137,23 @@ class SystemStateAggregator(private val context: Context) {
             deviceRepo.getMarketName(rawModel)
         }
         
-        // 2. Resolve SoC Identity (New Logic)
         val socModel = getSystemProperty("ro.soc.model")
         val vendorSocModel = getSystemProperty("ro.vendor.soc.model")
         val socExtName = getSystemProperty("ro.vendor.soc.model.external_name")
         val socPartName = getSystemProperty("ro.vendor.soc.model.part_name")
         val socManuf = getSystemProperty("ro.soc.manufacturer")
 
-        // Log identification attempt
-        Log.d("SystemIdentity", "Probing SoC: Model=$socModel, VendorModel=$vendorSocModel, Board=$board")
-
-        // Check DB
-        val socEntry = deviceRepo.identifySoc(
-            socModel, 
-            vendorSocModel, 
-            socExtName,
-            socPartName,
-            board, 
-            hardware
-        )
+        val socEntry = deviceRepo.identifySoc(socModel, vendorSocModel, socExtName, socPartName, board, hardware)
 
         val finalSocName = if (socEntry != null) {
             val vendor = if (socEntry.vendor.isNotEmpty()) socEntry.vendor else socManuf
             "$vendor ${socEntry.name}".trim()
         } else {
-            // Fallback: Use what we found
             if (socManuf.isNotEmpty() && socModel.isNotEmpty()) {
                 "$socManuf $socModel"
             } else if (socModel.isNotEmpty()) {
                  socModel
             } else {
-                // Last resort: Parse cpuinfo
                 val cpuInfo = readSysFs("/proc/cpuinfo")
                 val hwLine = cpuInfo?.lines()?.find { it.contains("Hardware") }
                 val hwVal = hwLine?.split(":")?.getOrNull(1)?.trim()
@@ -249,7 +226,7 @@ class SystemStateAggregator(private val context: Context) {
     private fun updateThermalState() {
         val batteryTemp = _state.value.batteryInfo.temperature
         var summary = "Optimal"
-        var color = 0xFF4CAF50 // Green
+        var color = 0xFF4CAF50 
 
         when {
             batteryTemp > 41 -> { summary = "Throttling"; color = 0xFFFF5252 }
@@ -268,18 +245,15 @@ class SystemStateAggregator(private val context: Context) {
     
     private fun updateCpuState() {
         try {
-            var gov = getSystemProperty("persist.sys.rianixia.currentgov")
-            if (gov.isEmpty() || gov == "unknown") {
-                val numCores = Runtime.getRuntime().availableProcessors()
-                for (i in 0 until numCores) {
-                    val g = readSysFs("/sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor")
-                    if (!g.isNullOrEmpty()) {
-                        gov = g
-                        break
-                    }
-                }
+            // Attempt to read current governor from cpu0
+            var gov = readSysFs("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor")
+            
+            // Fallback to property if file read fails (permission denied)
+            if (gov.isNullOrEmpty() || gov == "unknown") {
+                gov = getSystemProperty("persist.sys.rianixia.cpu.gov")
             }
-            if (gov.isEmpty()) gov = "unknown"
+            
+            if (gov.isNullOrEmpty()) gov = "unknown"
             
             var maxFreq = 0L
             val cpu0Freq = readSysFs("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq")?.toLongOrNull() ?: 0L
@@ -299,7 +273,7 @@ class SystemStateAggregator(private val context: Context) {
             _state.update {
                 it.copy(cpuState = CpuState(
                     frequencies = listOf(String.format("%.2f", cpu0Freq / 1000000.0)),
-                    activeGovernor = gov,
+                    activeGovernor = gov ?: "unknown",
                     peakFrequency = peakString,
                     graphPoints = cpuLoadBuffer.toList()
                 ))
@@ -327,8 +301,14 @@ class SystemStateAggregator(private val context: Context) {
 
     private fun readSysFs(path: String): String? {
         return try {
-            val file = File(path)
-            if (file.exists() && file.canRead()) file.readText().trim() else null
+            // Try standard read
+            File(path).takeIf { it.exists() && it.canRead() }?.readText()?.trim()
+                // Fallback to cat process
+                ?: try {
+                    val proc = Runtime.getRuntime().exec(arrayOf("cat", path))
+                    val result = proc.inputStream.bufferedReader().readText().trim()
+                    if (result.isNotEmpty()) result else null
+                } catch (e: Exception) { null }
         } catch (e: Exception) { null }
     }
 

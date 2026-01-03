@@ -34,9 +34,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.rianixia.settings.overlay.R
 import com.rianixia.settings.overlay.ui.components.BouncyLazyColumn
+import com.rianixia.settings.overlay.ui.components.GradientBlurAppBar
 import com.rianixia.settings.overlay.ui.components.MaterialGlassScaffold
 import com.rianixia.settings.overlay.ui.components.frostedGlass
 import com.rianixia.settings.overlay.ui.viewmodel.AZenithViewModel
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader
@@ -57,6 +60,7 @@ fun AZenithScreen(
 
     val context = LocalContext.current
     var recommendedPackages by remember { mutableStateOf<Set<String>>(emptySet()) }
+    val hazeState = remember { HazeState() }
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
@@ -93,159 +97,142 @@ fun AZenithScreen(
     }
 
     MaterialGlassScaffold {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
+        Box(
+            modifier = Modifier.fillMaxSize()
         ) {
-            Row(
+            // Main Content Layer
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 20.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .fillMaxSize()
+                    .hazeSource(state = hazeState)
             ) {
-                Surface(
-                    onClick = { navController.popBackStack() },
-                    shape = CircleShape,
-                    shadowElevation = 8.dp,
-                    color = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(48.dp)
+                BouncyLazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    // Added top padding (80.dp) so content starts below the floating header
+                    contentPadding = PaddingValues(top = 80.dp, bottom = 100.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(Icons.Rounded.ArrowBack, stringResource(R.string.back))
-                    }
-                }
-                Spacer(modifier = Modifier.width(16.dp))
-                Text(
-                    text = stringResource(R.string.azenith),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Icon(
-                    imageVector = Icons.Rounded.Bolt,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.weight(1f))
-                Surface(
-                    onClick = { showInfoDialog = true },
-                    shape = CircleShape,
-                    shadowElevation = 8.dp,
-                    color = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(Icons.Rounded.Info, stringResource(R.string.info))
-                    }
-                }
-            }
-
-            BouncyLazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 100.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                item {
-                    GlobalControl(
-                        isEnabled = state.isGlobalEnabled,
-                        onToggle = { viewModel.toggleGlobal(it) }
-                    )
-                }
-
-                item {
-                    Column(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.az_protocols_title),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                            modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)
-                        )
-                        
-                        val sliderColor = androidx.compose.ui.graphics.lerp(
-                            start = Color(0xFF2196F3), 
-                            stop = MaterialTheme.colorScheme.error, 
-                            fraction = (cpuFreqLimit / 100f).coerceIn(0f, 1f)
-                        )
-                        
-                        AZenithFeatureSlider(
-                            title = stringResource(R.string.az_freq_title),
-                            desc = stringResource(R.string.az_freq_desc),
-                            value = cpuFreqLimit,
-                            onValueChange = { cpuFreqLimit = it },
-                            range = 5f..100f,
-                            steps = 18,
-                            color = sliderColor,
-                            icon = Icons.Rounded.Thermostat
-                        )
-                        
-                        AZenithFeatureSwitch(
-                            title = stringResource(R.string.az_dnd_title),
-                            desc = stringResource(R.string.az_dnd_desc),
-                            isActive = dndGaming,
-                            color = MaterialTheme.colorScheme.tertiary,
-                            icon = Icons.Rounded.DoNotDisturb,
-                            onClick = { dndGaming = !dndGaming }
-                        )
-                        
-                        AZenithFeatureSwitch(
-                            title = stringResource(R.string.az_mem_title),
-                            desc = stringResource(R.string.az_mem_desc),
-                            isActive = aggrMemClean,
-                            color = MaterialTheme.colorScheme.secondary,
-                            icon = Icons.Rounded.CleaningServices,
-                            onClick = { aggrMemClean = !aggrMemClean }
-                        )
-                    }
-                }
-
-                item {
-                    Text(
-                        text = stringResource(R.string.az_apps_title_fmt, state.apps.size),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(start = 24.dp, top = 8.dp)
-                    )
-                }
-
-                if (state.isLoading) {
                     item {
-                        Box(Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                        GlobalControl(
+                            isEnabled = state.isGlobalEnabled,
+                            onToggle = { viewModel.toggleGlobal(it) }
+                        )
+                    }
+
+                    item {
+                        Column(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.az_protocols_title),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)
+                            )
+                            
+                            val sliderColor = androidx.compose.ui.graphics.lerp(
+                                start = Color(0xFF2196F3), 
+                                stop = MaterialTheme.colorScheme.error, 
+                                fraction = (cpuFreqLimit / 100f).coerceIn(0f, 1f)
+                            )
+                            
+                            AZenithFeatureSlider(
+                                title = stringResource(R.string.az_freq_title),
+                                desc = stringResource(R.string.az_freq_desc),
+                                value = cpuFreqLimit,
+                                onValueChange = { cpuFreqLimit = it },
+                                range = 5f..100f,
+                                steps = 18,
+                                color = sliderColor,
+                                icon = Icons.Rounded.Thermostat
+                            )
+                            
+                            AZenithFeatureSwitch(
+                                title = stringResource(R.string.az_dnd_title),
+                                desc = stringResource(R.string.az_dnd_desc),
+                                isActive = dndGaming,
+                                color = MaterialTheme.colorScheme.tertiary,
+                                icon = Icons.Rounded.DoNotDisturb,
+                                onClick = { dndGaming = !dndGaming }
+                            )
+                            
+                            AZenithFeatureSwitch(
+                                title = stringResource(R.string.az_mem_title),
+                                desc = stringResource(R.string.az_mem_desc),
+                                isActive = aggrMemClean,
+                                color = MaterialTheme.colorScheme.secondary,
+                                icon = Icons.Rounded.CleaningServices,
+                                onClick = { aggrMemClean = !aggrMemClean }
+                            )
                         }
                     }
-                } else {
-                    items(displayApps, key = { it.packageName }) { app ->
-                        val isRecommended = app.packageName in recommendedPackages
-                        val effectiveEnabled = if (isRecommended && !app.isEnabled) true else app.isEnabled
-                        
-                        if (isRecommended && !app.isEnabled) {
-                            LaunchedEffect(Unit) {
-                                viewModel.toggleApp(app.packageName, true)
+
+                    item {
+                        Text(
+                            text = stringResource(R.string.az_apps_title_fmt, state.apps.size),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(start = 24.dp, top = 8.dp)
+                        )
+                    }
+
+                    if (state.isLoading) {
+                        item {
+                            Box(Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                             }
                         }
+                    } else {
+                        items(displayApps, key = { it.packageName }) { app ->
+                            val isRecommended = app.packageName in recommendedPackages
+                            val effectiveEnabled = if (isRecommended && !app.isEnabled) true else app.isEnabled
+                            
+                            if (isRecommended && !app.isEnabled) {
+                                LaunchedEffect(Unit) {
+                                    viewModel.toggleApp(app.packageName, true)
+                                }
+                            }
 
-                        AppItemRow(
-                            label = app.label,
-                            pkg = app.packageName,
-                            icon = app.icon,
-                            isEnabled = effectiveEnabled,
-                            isGlobalEnabled = state.isGlobalEnabled,
-                            isRecommended = isRecommended,
-                            onToggle = { viewModel.toggleApp(app.packageName, it) }
-                        )
+                            AppItemRow(
+                                label = app.label,
+                                pkg = app.packageName,
+                                icon = app.icon,
+                                isEnabled = effectiveEnabled,
+                                isGlobalEnabled = state.isGlobalEnabled,
+                                isRecommended = isRecommended,
+                                onToggle = { viewModel.toggleApp(app.packageName, it) }
+                            )
+                        }
                     }
                 }
             }
+
+            // Header Overlay Layer
+            GradientBlurAppBar(
+                title = stringResource(R.string.azenith),
+                icon = Icons.Rounded.Bolt,
+                onBackClick = { navController.popBackStack() },
+                hazeState = hazeState,
+                modifier = Modifier.align(Alignment.TopCenter),
+                addStatusBarPadding = false,
+                actions = {
+                    Surface(
+                        onClick = { showInfoDialog = true },
+                        shape = CircleShape,
+                        shadowElevation = 8.dp,
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(48.dp).border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f), CircleShape)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(Icons.Rounded.Info, stringResource(R.string.info))
+                        }
+                    }
+                }
+            )
         }
     }
 

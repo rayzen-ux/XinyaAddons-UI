@@ -210,4 +210,22 @@
     <string name="az_engine_active">Engine Active</string>
     <string name="az_engine_offline">Engine Offline</string>
     <string name="az_tag_recommended">Recommended</string>
+    <string name="cpu_controller">CPU Controller</string>
+    <string name="cpu_mode_simple">Simple</string>
+    <string name="cpu_mode_advanced">Advanced</string>
+    <string name="cpu_section_profiles">Quick Profiles</string>
+    <string name="cpu_section_global">Global Scaling</string>
+    <string name="cpu_preset_perf">Performance</string>
+    <string name="cpu_preset_balance">Balanced</string>
+    <string name="cpu_preset_power">Battery</string>
+    <string name="cpu_gov_title">Governor</string>
+    <string name="btn_change">Change</string>
+    <string name="cpu_freq_cap">Frequency Cap</string>
+    <string name="cpu_ultra_saver">Ultra Battery Saver</string>
+    <string name="cpu_ultra_saver_desc">Locks frequency to 50% and forces powersave governor.</string>
+    <string name="cpu_advanced_warning">Advanced Mode active. Improper settings may cause instability.</string>
+    <string name="cpu_label_max">Maximum</string>
+    <string name="cpu_label_min">Minimum</string>
+    <string name="cpu_footer_simple">System manages detailed frequencies automatically.</string>
+    <string name="cpu_footer_advanced">AIO Controller Override Active.</string>
 </resources>
