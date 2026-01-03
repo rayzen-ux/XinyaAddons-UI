@@ -1,6 +1,18 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
+// [FIX] Add buildscript block to provide the encryption library to the plugin
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        // The plugin needs this class available in its classpath to perform encryption
+        classpath libs.stringfog.xor
+    }
+}
+
 plugins {
     alias(libs.plugins.androidApplication) apply false
     alias(libs.plugins.kotlinAndroid) apply false
     alias(libs.plugins.composeCompiler) apply false
+    alias(libs.plugins.stringfog) apply false
 }

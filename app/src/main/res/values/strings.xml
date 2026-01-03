@@ -1,3 +1,213 @@
 <resources>
     <string name="app_name">Xia\'s Addons</string>
+    <string name="app_title_toolkit">.method getAddons</string>
+
+    <string name="nav_home">Home</string>
+    <string name="nav_perf">Performance</string>
+    <string name="nav_sys">System</string>
+    <string name="back">Back</string>
+    <string name="info">Info</string>
+
+    <string name="system_operational">Dashboard</string>
+    <string name="ac_power_source">AC Input</string>
+    <string name="battery_source">Battery</string>
+    <string name="uptime_fmt">UP: %1$s</string>
+    <string name="deep_sleep_fmt">DS: %1$s</string>
+    <string name="cpu_flux">CPU Load</string>
+    <string name="pwr_cell">Battery</string>
+    <string name="therm_sens">Thermals</string>
+    <string name="quick_protocols">Quick Profiles</string>
+    <string name="protocol_gaming">Gaming</string>
+    <string name="protocol_efficiency">Efficiency</string>
+
+    <string name="power_matrix">Battery Center</string>
+    <string name="power_strategy">Charging Strategy</string>
+    <string name="strategy_bypass_title">AC Bypass</string>
+    <string name="strategy_bypass_desc">Pause charging, run on AC power.</string>
+    <string name="strategy_thermal_title">Thermal Cutoff</string>
+    <string name="strategy_thermal_desc">Stop charging if overheating.</string>
+    <string name="status_active">Active</string>
+    <string name="status_disabled">Disabled</string>
+    <string name="charging_status">Charging</string>
+    <string name="discharging_status">Discharging</string>
+    <string name="limit_stops_at">Stops charging at:</string>
+    <string name="limit_charge_limit">Charge Limit</string>
+    <string name="diag_temp">Temp</string>
+    <string name="diag_health">Health</string>
+    <string name="diag_chem">Type</string>
+    <string name="batt_tech_default">Li-ion</string>
+
+    <string name="perf_matrix">Performance</string>
+    <string name="sys_authority">System Controller</string>
+    <string name="sys_cpu">CPU Manager</string>
+    <string name="gov_control">Governor Control</string>
+    <string name="freq_scaling">Frequency &amp; Scaling</string>
+    <string name="gm_bst">Game Boost</string>
+    <string name="azenith">AZenith Engine</string>
+    <string name="pwr_vlt">Voltage</string>
+    <string name="undervolt">Undervolt</string>
+    <string name="io_sched_label">I/O Scheduler</string>
+    <string name="storage_queue">Storage Queue</string>
+    <string name="optimization">Optimization</string>
+    
+    <string name="cpu_control_title">CPU Control</string>
+    <string name="governor_selection">Governor Selection</string>
+    <string name="advanced_undervolt">Advanced Undervolt</string>
+    <string name="cpu_eem_offsets">CPU Offsets</string>
+    <string name="little_core">Little Core</string>
+    <string name="unit_mv">" mV"</string>
+    <string name="io_scheduler_title">I/O Scheduler</string>
+    <string name="active_scheduler">Active Scheduler</string>
+    <string name="azenith_boost">AZenith Boost</string>
+    <string name="active_profiles">Active Profiles</string>
+
+    <string name="system_core">System Settings</string>
+    <string name="hardware_matrix">Hardware</string>
+    <string name="id_matrix_label">Identity</string>
+    <string name="identity_spoofing">Identity &amp; Spoofing</string>
+    <string name="identity_desc">Play Integrity · Props · Netflix</string>
+    <string name="vis_fx">Visuals</string>
+    <string name="halo_light">HaloLight</string>
+    <string name="disp_cfg">Display</string>
+    <string name="resolution">Resolution</string>
+    <string name="hw_therm">Thermals</string>
+    <string name="thermal">Thermal</string>
+    <string name="pwr_src">Power</string>
+    <string name="battery">Battery</string>
+    <string name="kernel_flags">Kernel Flags</string>
+    <string name="secure_flag">Secure Flag</string>
+    <string name="secure_flag_desc">Allow screenshots in restricted apps</string>
+    <string name="force_rotation">Force Rotation</string>
+    <string name="force_rotation_desc">Hide navbar rotation button</string>
+
+    <string name="spoof_dashboard">Identity Spoofing</string>
+    <string name="pif_title">Play Integrity Fix (PIF)</string>
+    <string name="auto_update_pif">Auto-Update PIF</string>
+    <string name="danda_updater">Danda\'s auto-json updater</string>
+    <string name="preview">Preview</string>
+
+    <string name="thermal_engine">Thermal Engine</string>
+    <string name="throttle_threshold">Throttle Threshold</string>
+    <string name="temp_current_fmt">Current: %1$d°C</string>
+    <string name="profile_os">OS</string>
+    <string name="profile_ai">AI</string>
+    <string name="profile_off">OFF</string>
+    <string name="profile_man">MAN</string>
+    
+    <string name="mode_default">Default</string>
+    <string name="mode_adaptive">Adaptive</string>
+    <string name="mode_disabled">Disabled</string>
+    <string name="mode_custom">Custom</string>
+    
+    <string name="desc_default">System Optimized</string>
+    <string name="desc_adaptive">Learns from Usage</string>
+    <string name="desc_disabled">Safety Off</string>
+    <string name="desc_custom">Manual Limit</string>
+
+    <string name="dialog_high_temp_title">High Temperature Risk</string>
+    <string name="dialog_high_temp_msg">Setting the throttle limit above 50°C may cause the device to become uncomfortable to hold and could degrade battery life faster.\n\nAre you sure you want to proceed?</string>
+    <string name="btn_allow_high_temp">Allow >50°C</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="btn_disable">Disable</string>
+    <string name="btn_got_it">Got it</string>
+
+    <string name="dialog_info_title">Thermal Profiles</string>
+    <string name="info_os_title">OS Default</string>
+    <string name="info_os_desc">Uses the manufacturer\'s stock thermal configuration.</string>
+    <string name="info_ai_title">Adaptive AI</string>
+    <string name="info_ai_desc">Dynamically adjusts throttle limits based on usage patterns.</string>
+    <string name="info_disabled_title">Disabled</string>
+    <string name="info_disabled_desc">Removes all thermal throttling. DANGEROUS.</string>
+    <string name="info_custom_title">Custom</string>
+    <string name="info_custom_desc">Manually set the temperature threshold.</string>
+
+    <string name="dialog_warning_title">Disable Safety?</string>
+    <string name="dialog_warning_msg">Disabling thermal throttling can lead to device overheating, instability, and potential hardware damage.</string>
+
+    <string name="doze_title">Enforce Doze</string>
+    <string name="doze_status_running">Running</string>
+    <string name="doze_status_stopped">Stopped</string>
+    <string name="doze_desc">Forces doze mode immediately when screen turns off. To gain more battery life</string>
+    <string name="doze_config_title">Configuration</string>
+    <string name="doze_delay">Entry Delay</string>
+    <string name="doze_disable_sensors">Disable Sensors</string>
+    <string name="doze_disable_wifi">Disable WiFi</string>
+    <string name="doze_disable_data">Disable Mobile Data</string>
+
+    <string name="dialog_guide_title">Power Management Guide</string>
+    <string name="guide_reactor_title">Auto Cut Control</string>
+    <string name="guide_reactor_desc">Drag the ring visually to set the charge limit.</string>
+    <string name="guide_autocut_title">Auto Cut</string>
+    <string name="guide_autocut_desc">Stops charging at the set limit to preserve battery health.</string>
+    <string name="guide_bypass_title">AC Bypass</string>
+    <string name="guide_bypass_desc">Uses charger power directly after the limit is reached to reduce heat.</string>
+    <string name="guide_thermal_title">Thermal Cutoff</string>
+    <string name="guide_thermal_desc">Safety mechanism that stops charging if temperature exceeds safe limits.</string>
+    <string name="guide_doze_title">Enforce Doze</string>
+    <string name="guide_doze_desc">Forces doze mode immediately when screen turns off. To gain more battery life</string>
+
+    <string name="toast_config_applied">Configuration Applied</string>
+    <string name="uv_advanced_mode">Advanced Mode</string>
+    <string name="status_unlocked">Unlocked</string>
+    <string name="status_safe_mode">Safe Mode</string>
+    <string name="uv_advanced_desc">Unlocks extended voltage range (&lt; -25mV) and manual input.</string>
+    <string name="btn_load_recommended">Load Recommended Values</string>
+    <string name="uv_gpu_settings_title">GPU SETTINGS</string>
+    <string name="uv_gpu_warning">GPU undervolting often leads to visual artifacts, driver crashes, and system instability. Proceed with caution.</string>
+    <string name="btn_save">Save</string>
+    
+    <string name="dialog_uv_advanced_title">Enable Advanced Mode?</string>
+    <string name="dialog_uv_advanced_msg">You are about to unlock unsafe voltage ranges.\n\nApplying incorrect values can cause bootloops, data loss, or hardware instability.\n\nThe developer is NOT responsible for any damage caused by using this feature.</string>
+    <string name="btn_accept_risk">I Accept Risk</string>
+    
+    <string name="dialog_uv_stage1_title">Instability Warning</string>
+    <string name="dialog_uv_stage1_msg">Offsets lower than -50 mV pose a significant risk of random reboots and freezes.</string>
+    <string name="btn_understand">I Understand</string>
+    
+    <string name="dialog_uv_stage2_title">HARDWARE DAMAGE RISK</string>
+    <string name="dialog_uv_stage2_msg">You are applying extreme values.\n\nThis may cause permanent hardware damage, filesystem corruption, or bootloops.\n\nTHE DEVELOPER IS NOT RESPONSIBLE for any damage to your device.</string>
+    <string name="btn_accept_responsibility">I Accept Responsibility</string>
+    
+    <string name="dialog_uv_info_title">About Undervolting</string>
+    <string name="dialog_uv_info_1">Undervolting reduces the voltage supplied to the CPU/GPU, reducing heat and power consumption.</string>
+    <string name="dialog_uv_info_2">Offsets are applied relative to the factory voltage table. Excessive negative values cause instability.</string>
+    <string name="dialog_uv_info_3">Recommended: -11mV for CPU clusters.</string>
+    
+    <string name="uv_label_big">Big Core (B)</string>
+    <string name="uv_label_bl">Big–Little (BL)</string>
+    <string name="uv_label_little">Little Core (L)</string>
+    <string name="uv_label_cci">CCI</string>
+    <string name="uv_label_gpu">GPU Undervolt</string>
+    <string name="uv_label_gpu_high">GPU High Undervolt</string>
+    
+    <string name="uv_risk_safe">Operating within safe margins.</string>
+    <string name="uv_risk_light">Silicon variance may affect stability.</string>
+    <string name="uv_risk_strong">High risk of random reboot and system freeze.</string>
+    <string name="uv_risk_extreme">DANGEROUS. Immediate bootloop risk.</string>
+    <string name="uv_eem_offset">EEM OFFSET</string>
+    <string name="uv_input_hint">Offset (mV)</string>
+    <string name="uv_notes_title">ENGINEERING NOTES</string>
+    <string name="uv_notes_text">• EEM domains differ in stability per device.\n• Transient loads can trigger freeze even at low offsets.\n• Safety scaling is non-linear.</string>
+
+    <string name="az_protocols_title">PERFORMANCE PROTOCOLS</string>
+    <string name="az_freq_title">Limit Max Freq</string>
+    <string name="az_freq_desc">Cap CPU frequency while gaming to reduce overheating.</string>
+    <string name="az_dnd_title">DND Gaming</string>
+    <string name="az_dnd_desc">Blocks notifications and calls while game is foreground.</string>
+    <string name="az_mem_title">Aggressive Memory Cleaner</string>
+    <string name="az_mem_desc">Purges background caches more frequently.</string>
+    
+    <string name="az_apps_title_fmt">INSTALLED APPLICATIONS (%1$d)</string>
+    
+    <string name="az_info_injection_title">System Injection</string>
+    <string name="az_info_injection_desc">Injects performance flags directly into the application render pipeline.</string>
+    <string name="az_info_boost_title">Game Boost</string>
+    <string name="az_info_boost_desc">Prioritizes foreground resources for selected applications to reduce jitter.</string>
+    <string name="az_info_mem_title">Memory Lock</string>
+    <string name="az_info_mem_desc">Prevents selected apps from being killed by the Low Memory Killer (LMK).</string>
+    
+    <string name="az_master_switch">Master Switch</string>
+    <string name="az_engine_active">Engine Active</string>
+    <string name="az_engine_offline">Engine Offline</string>
+    <string name="az_tag_recommended">Recommended</string>
 </resources>

@@ -4,6 +4,7 @@ import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -15,46 +16,39 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
+// Fallback Dark Theme
 private val DarkColorScheme = darkColorScheme(
     primary = XinyaDarkPrimary,
     onPrimary = XinyaDarkOnPrimary,
     secondary = XinyaDarkSecondary,
-    onSecondary = XinyaDarkText,
     background = XinyaDarkBackground,
-    onBackground = XinyaDarkText,
     surface = XinyaDarkSurface,
-    onSurface = XinyaDarkText,
     surfaceVariant = XinyaDarkSurfaceVariant,
+    onSurface = XinyaDarkText,
     onSurfaceVariant = XinyaDarkSubText,
     outline = XinyaDarkDivider,
-    error = XinyaDarkError,
-    onError = XinyaDarkBackground,
-    primaryContainer = XinyaDarkSurfaceVariant,
-    onPrimaryContainer = XinyaDarkText
+    error = XinyaDarkError
 )
 
+// Fallback Light Theme
 private val LightColorScheme = lightColorScheme(
     primary = XinyaLightPrimary,
     onPrimary = XinyaLightOnPrimary,
     secondary = XinyaLightSecondary,
-    onSecondary = XinyaLightOnPrimary,
     background = XinyaLightBackground,
-    onBackground = XinyaLightText,
     surface = XinyaLightSurface,
-    onSurface = XinyaLightText,
     surfaceVariant = XinyaLightSurfaceVariant,
+    onSurface = XinyaLightText,
     onSurfaceVariant = XinyaLightSubText,
     outline = XinyaLightDivider,
-    error = XinyaLightError,
-    onError = XinyaLightSurface,
-    primaryContainer = XinyaLightSurfaceVariant,
-    onPrimaryContainer = XinyaLightText
+    error = XinyaLightError
 )
 
 @Composable
 fun XinyaTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = false, // Disabled by default for consistent styling
+    // Force Dynamic Colors on Android 12+ for Material You
+    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -70,8 +64,9 @@ fun XinyaTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.background.toArgb()
-            window.navigationBarColor = colorScheme.surface.toArgb()
+            // Transparent status bar to allow content to flow behind
+            window.statusBarColor = android.graphics.Color.TRANSPARENT 
+            window.navigationBarColor = android.graphics.Color.TRANSPARENT
             
             val insetsController = WindowCompat.getInsetsController(window, view)
             insetsController.isAppearanceLightStatusBars = !darkTheme
@@ -81,6 +76,7 @@ fun XinyaTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
+        typography = Typography(),
         content = content
     )
 }
