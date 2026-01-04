@@ -106,7 +106,7 @@
     <string name="io_guide_desc">I/O Scheduler menentukan urutan proses baca/tulis penyimpanan. Pilihan yang tepat dapat meningkatkan responsivitas atau baterai.</string>
     <string name="io_common_types">Tipe Umum:</string>
     <string name="io_type_noop">Noop / None</string>
-    <string name="io_desc_noop">FIFO Dasar. Terbaik untuk Flash Storage modern (UFS/NVMe).</string>
+    <string name="io_desc_noop">FIFO Dasar. Terbaik untuk Flash Storage modern (UFS/NVMe) karena hardware menangani pengurutan.</string>
     <string name="io_type_mq">MQ-Deadline</string>
     <string name="io_desc_mq">Memprioritaskan permintaan baca untuk mencegah lag. Bagus untuk umum.</string>
     <string name="io_type_bfq">BFQ</string>
@@ -139,7 +139,7 @@
 
     <string name="sys_tuner_title">Penyelaras SystemUI</string>
     <string name="sys_flag_secure_title">Nonaktifkan Flag Secure</string>
-    <string name="sys_flag_secure_desc">Mengizinkan tangkapan layar di aplikasi yang dikunci/aman.</string>
+    <string name="sys_flag_secure_desc">Mengizinkan tangkapan layar dan perekaman layar di aplikasi dan jendela yang aman.</string>
     <string name="sys_rotation_title">Tombol Rotasi Mengambang</string>
     <string name="sys_rotation_desc">Paksa aktifkan tombol rotasi di navbar saat diputar.</string>
 
@@ -298,34 +298,34 @@
     <string name="az_engine_active">Mesin Aktif</string>
     <string name="az_engine_offline">Mesin Offline</string>
     <string name="az_tag_recommended">Rekomendasi</string>
-    <string name="menu_settings">Settings</string>
-    <string name="menu_about">About</string>
+    <string name="menu_settings">Pengaturan</string>
+    <string name="menu_about">Tentang</string>
 
-    <string name="about_title">About</string>
-    <string name="about_app_desc">Xia\'s Addons is a powerful toolkit designed to unlock the full potential of your device. It bridges the gap between complex system modifications and user-friendly control, offering granular management of hardware resources.</string>
+    <string name="about_title">Tentang</string>
+    <string name="about_app_desc">Xia\'s Addons adalah toolkit canggih yang dirancang untuk membuka potensi penuh perangkat Anda. Aplikasi ini menjembatani kesenjangan antara modifikasi sistem yang kompleks dan kontrol yang ramah pengguna, menawarkan manajemen sumber daya perangkat keras yang terperinci.</string>
     
-    <string name="about_features_header">KEY FEATURES</string>
-    <string name="about_feat_perf">Performance Profiling</string>
-    <string name="about_feat_perf_desc">Advanced CPU/GPU frequency scaling and governor management.</string>
-    <string name="about_feat_identity">Identity Spoofing</string>
-    <string name="about_feat_identity_desc">Bypass Play Integrity checks and unlock app-specific features.</string>
-    <string name="about_feat_power">Power Management</string>
-    <string name="about_feat_power_desc">Bypass charging and thermal safety controls.</string>
+    <string name="about_features_header">FITUR UTAMA</string>
+    <string name="about_feat_perf">Pemrofilan Performa</string>
+    <string name="about_feat_perf_desc">Penskalaan frekuensi CPU/GPU tingkat lanjut dan manajemen governor.</string>
+    <string name="about_feat_identity">Spoofing Identitas</string>
+    <string name="about_feat_identity_desc">Bypass pemeriksaan Play Integrity dan buka fitur khusus aplikasi.</string>
+    <string name="about_feat_power">Manajemen Daya</string>
+    <string name="about_feat_power_desc">Bypass kontrol keamanan pengisian daya dan termal.</string>
 
-    <string name="about_safety_header">SAFETY &amp; DEFAULTS</string>
-    <string name="about_safety_title">Why Defaults Matter</string>
-    <string name="about_safety_desc">The default configurations are tuned for stability and safety. Advanced modules like Undervolting and Thermal overrides are powerful but risky. We recommend sticking to the "Balanced" profiles unless you understand the hardware implications.</string>
+    <string name="about_safety_header">KEAMANAN &amp; BAWAAN</string>
+    <string name="about_safety_title">Mengapa Bawaan Penting</string>
+    <string name="about_safety_desc">Konfigurasi bawaan disetel untuk stabilitas dan keamanan. Modul lanjutan seperti Undervolting dan Override Termal sangat kuat tetapi berisiko. Kami menyarankan untuk tetap menggunakan profil "Seimbang" kecuali Anda memahami implikasi perangkat kerasnya.</string>
 
-    <string name="about_credits_header">DEVELOPMENT</string>
-    <string name="about_dev_role">Creator &amp; Lead Developer</string>
+    <string name="about_credits_header">PENGEMBANGAN</string>
+    <string name="about_dev_role">Pembuat &amp; Pengembang Utama</string>
     <string name="about_dev_name">@rianixia</string>
-    <string name="about_github_title">Source Code</string>
+    <string name="about_github_title">Kode Sumber</string>
     <string name="about_github_handle">GitHub: ryanistr</string>
     
-    <string name="about_update_header">UPDATES</string>
-    <string name="about_check_updates">Check for Updates</string>
-    <string name="about_version_fmt">Version %1$s</string>
-    <string name="about_up_to_date">You are on the latest version.</string>
+    <string name="about_update_header">PEMBARUAN</string>
+    <string name="about_check_updates">Periksa Pembaruan</string>
+    <string name="about_version_fmt">Versi %1$s</string>
+    <string name="about_up_to_date">Anda menggunakan versi terbaru.</string>
 
-    <string name="settings_title">App Settings</string>
+    <string name="settings_title">Pengaturan Aplikasi</string>
 </resources>
