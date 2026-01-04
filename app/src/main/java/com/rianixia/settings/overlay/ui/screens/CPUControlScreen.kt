@@ -373,7 +373,12 @@ private fun GlobalControlCard(
         Spacer(Modifier.height(24.dp))
 
         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.cpu_freq_cap), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Text(
+                stringResource(R.string.cpu_freq_cap), 
+                style = MaterialTheme.typography.titleSmall, 
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
             Text("${scale.roundToInt()}%", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = color)
         }
         Spacer(Modifier.height(12.dp))
@@ -404,8 +409,17 @@ private fun GlobalControlCard(
             Icon(Icons.Rounded.Bolt, null, tint = if(isSaver) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.width(16.dp))
             Column(Modifier.weight(1f)) {
-                Text(stringResource(R.string.cpu_ultra_saver), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                Text(stringResource(R.string.cpu_ultra_saver_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    stringResource(R.string.cpu_ultra_saver), 
+                    style = MaterialTheme.typography.titleSmall, 
+                    fontWeight = FontWeight.Bold,
+                    color = if(isSaver) MaterialTheme.colorScheme.onTertiaryContainer else MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    stringResource(R.string.cpu_ultra_saver_desc), 
+                    style = MaterialTheme.typography.bodySmall, 
+                    color = if(isSaver) MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha=0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
             Switch(
                 checked = isSaver,
@@ -509,7 +523,12 @@ private fun ClusterConfigCard(
             )
             Spacer(Modifier.width(12.dp))
             Column {
-                Text(state.cluster.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(
+                    state.cluster.name, 
+                    style = MaterialTheme.typography.titleMedium, 
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
                 Text(
                     stringResource(R.string.cpu_cluster_cores_fmt, state.cluster.cores.joinToString(", ")),
                     style = MaterialTheme.typography.labelSmall,
@@ -577,7 +596,9 @@ private fun TechnicalFooter(isAdvanced: Boolean) {
         Text(
             text = if (isAdvanced) stringResource(R.string.cpu_manual_override_active) else stringResource(R.string.cpu_footer_simple),
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.outline
+            // Changed from 'outline' to 'onSurfaceVariant' because 'outline' (XinyaDarkDivider) 
+            // is too dark (0xFF30363D) for text on a dark background.
+            color = MaterialTheme.colorScheme.onSurfaceVariant 
         )
     }
 }
