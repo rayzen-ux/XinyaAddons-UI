@@ -50,6 +50,19 @@
 
         </activity>
 
+        <activity-alias
+            android:name=".Launcher"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher"
+            android:label="Xinya Toolkit"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
         <service
             android:name=".services.EnforceDozeService"
             android:enabled="true"

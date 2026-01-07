@@ -15,7 +15,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -63,10 +62,10 @@ fun AboutScreen(
                                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f), RoundedCornerShape(24.dp))
                         ) {
                             Image(
-                                painter = painterResource(id = R.drawable.ic_launcher_background),
+                                painter = painterResource(id = R.drawable.jiro_banner),
                                 contentDescription = null,
                                 contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize().alpha(0.5f)
+                                modifier = Modifier.fillMaxSize()
                             )
                             
                             Box(

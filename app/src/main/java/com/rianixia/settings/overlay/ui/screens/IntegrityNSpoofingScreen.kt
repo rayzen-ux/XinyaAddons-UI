@@ -87,74 +87,81 @@ fun IntegrityNSpoofingScreen(
 
                     item {
                         MaterialGlassCard(modifier = Modifier.padding(horizontal = 16.dp)) {
-                            // Primary Toggle
-                            XinyaToggle(
-                                title = stringResource(R.string.pif_enable_title),
-                                subtitle = stringResource(R.string.pif_enable_desc),
-                                icon = Icons.Rounded.Shield,
-                                checked = state.isPifEnabled,
-                                onCheckedChange = { viewModel.togglePif(it) }
-                            )
-                            
-                            MaterialDivider()
-                            
-                            // Auto Update Configuration
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    Icons.Rounded.Update, 
-                                    null, 
-                                    tint = MaterialTheme.colorScheme.onSurface, 
-                                    modifier = Modifier.size(24.dp)
+                            if (state.isLoading) {
+                                // Simple skeleton loading for immediate feedback
+                                Box(Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
+                                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                                }
+                            } else {
+                                // Primary Toggle
+                                XinyaToggle(
+                                    title = stringResource(R.string.pif_enable_title),
+                                    subtitle = stringResource(R.string.pif_enable_desc),
+                                    icon = Icons.Rounded.Shield,
+                                    checked = state.isPifEnabled,
+                                    onCheckedChange = { viewModel.togglePif(it) }
                                 )
-                                Spacer(Modifier.width(16.dp))
-                                Column(Modifier.weight(1f)) {
-                                    Text(stringResource(R.string.pif_auto_update), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                                    
-                                    val modeStr = if (state.pifUpdateMode == PifUpdateMode.ON_REBOOT) stringResource(R.string.pif_mode_reboot) else stringResource(R.string.pif_mode_periodic)
-                                    Text(
-                                        if (state.isPifAutoUpdate) stringResource(R.string.pif_active_fmt, modeStr) else stringResource(R.string.status_disabled),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                
+                                MaterialDivider()
+                                
+                                // Auto Update Configuration
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        Icons.Rounded.Update, 
+                                        null, 
+                                        tint = MaterialTheme.colorScheme.onSurface, 
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Spacer(Modifier.width(16.dp))
+                                    Column(Modifier.weight(1f)) {
+                                        Text(stringResource(R.string.pif_auto_update), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                                        
+                                        val modeStr = if (state.pifUpdateMode == PifUpdateMode.ON_REBOOT) stringResource(R.string.pif_mode_reboot) else stringResource(R.string.pif_mode_periodic)
+                                        Text(
+                                            if (state.isPifAutoUpdate) stringResource(R.string.pif_active_fmt, modeStr) else stringResource(R.string.status_disabled),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    Switch(
+                                        checked = state.isPifAutoUpdate,
+                                        onCheckedChange = { viewModel.togglePifAutoUpdate(it) }
                                     )
                                 }
-                                Switch(
-                                    checked = state.isPifAutoUpdate,
-                                    onCheckedChange = { viewModel.togglePifAutoUpdate(it) }
-                                )
-                            }
 
-                            AnimatedVisibility(visible = state.isPifAutoUpdate) {
-                                Column(Modifier.padding(start = 40.dp, top = 8.dp, bottom = 8.dp)) {
-                                    UpdateModeSelector(
-                                        currentMode = state.pifUpdateMode,
-                                        onModeSelect = { viewModel.setPifUpdateMode(it) }
-                                    )
+                                AnimatedVisibility(visible = state.isPifAutoUpdate) {
+                                    Column(Modifier.padding(start = 40.dp, top = 8.dp, bottom = 8.dp)) {
+                                        UpdateModeSelector(
+                                            currentMode = state.pifUpdateMode,
+                                            onModeSelect = { viewModel.setPifUpdateMode(it) }
+                                        )
+                                    }
                                 }
-                            }
-                            
-                            Spacer(Modifier.height(16.dp))
-                            
-                            // Manual Action
-                            Button(
-                                onClick = { viewModel.triggerPifUpdate() },
-                                enabled = !state.isPifUpdating,
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                if (state.isPifUpdating) {
-                                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                                    Spacer(Modifier.width(8.dp))
-                                    Text(stringResource(R.string.pif_updating), color = MaterialTheme.colorScheme.onPrimaryContainer)
-                                } else {
-                                    Icon(Icons.Rounded.SystemUpdateAlt, null, modifier = Modifier.size(16.dp))
-                                    Spacer(Modifier.width(8.dp))
-                                    Text(stringResource(R.string.pif_update_now), color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                
+                                Spacer(Modifier.height(16.dp))
+                                
+                                // Manual Action
+                                Button(
+                                    onClick = { viewModel.triggerPifUpdate() },
+                                    enabled = !state.isPifUpdating,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    if (state.isPifUpdating) {
+                                        CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                                        Spacer(Modifier.width(8.dp))
+                                        Text(stringResource(R.string.pif_updating), color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                    } else {
+                                        Icon(Icons.Rounded.SystemUpdateAlt, null, modifier = Modifier.size(16.dp))
+                                        Spacer(Modifier.width(8.dp))
+                                        Text(stringResource(R.string.pif_update_now), color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                    }
                                 }
                             }
                         }
@@ -231,6 +238,26 @@ fun IntegrityNSpoofingScreen(
                 hazeState = hazeState,
                 modifier = Modifier.align(Alignment.TopCenter)
             )
+
+            // Save FAB
+            AnimatedVisibility(
+                visible = state.hasUnsavedChanges,
+                enter = scaleIn() + fadeIn(),
+                exit = scaleOut() + fadeOut(),
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(24.dp)
+                    .navigationBarsPadding() // Ensures it sits above system nav bar
+            ) {
+                FloatingActionButton(
+                    onClick = { viewModel.saveGamePropsChanges() },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    shape = CircleShape
+                ) {
+                    Icon(Icons.Rounded.Save, null)
+                }
+            }
         }
     }
     
@@ -261,14 +288,25 @@ fun IntegrityNSpoofingScreen(
     }
     
     if (activeProfileForAddPkg != null) {
-        AppSelectionDialog(
-            apps = state.installedApps,
-            onDismiss = { activeProfileForAddPkg = null },
-            onPackageSelected = { pkg ->
-                viewModel.addPackageToProfile(activeProfileForAddPkg!!, pkg)
-                activeProfileForAddPkg = null
-            }
-        )
+        if (state.isAppsLoading) {
+            // Show loading dialog if apps aren't ready
+            AlertDialog(
+                onDismissRequest = { activeProfileForAddPkg = null },
+                icon = { CircularProgressIndicator() },
+                title = { Text("Loading Apps") },
+                text = { Text("Please wait while we scan installed applications...") },
+                confirmButton = {}
+            )
+        } else {
+            AppSelectionDialog(
+                apps = state.installedApps,
+                onDismiss = { activeProfileForAddPkg = null },
+                onPackageSelected = { pkg ->
+                    viewModel.addPackageToProfile(activeProfileForAddPkg!!, pkg)
+                    activeProfileForAddPkg = null
+                }
+            )
+        }
     }
 }
 
@@ -369,7 +407,7 @@ private fun GamePropsControlPanel(
                                 Icon(Icons.Rounded.SaveAlt, stringResource(R.string.btn_export), tint = MaterialTheme.colorScheme.primary) 
                             }
                         }
-                        
+
                         // Add Profile Action
                         Button(
                             onClick = onAddProfile,

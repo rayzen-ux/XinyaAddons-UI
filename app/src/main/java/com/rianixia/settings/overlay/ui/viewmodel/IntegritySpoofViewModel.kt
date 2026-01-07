@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -59,8 +60,11 @@ data class IntegritySpoofState(
     val resolvedPackages: Map<String, ResolvedPackage> = emptyMap(),
     val installedApps: List<InstalledAppInfo> = emptyList(),
     
+    val hasUnsavedChanges: Boolean = false, // New flag for pending saves
+    
     val showImportError: Boolean = false,
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val isAppsLoading: Boolean = true
 )
 
 enum class PifUpdateMode {
@@ -74,58 +78,97 @@ class IntegritySpoofViewModel(application: Application) : AndroidViewModel(appli
     val uiState: StateFlow<IntegritySpoofState> = _uiState.asStateFlow()
 
     private val gamePropsFile = File(application.filesDir, "gameprops.json")
-    private val prefs = application.getSharedPreferences("integrity_config", Context.MODE_PRIVATE)
+    
+    // Manual Modifications Required:
+    // None. The code is self-contained. 
 
     // System Properties Constants
     private object Props {
-        const val PIF_ENABLE = "persist.sys.rianixia.integrity.play_fix"
-        const val PHOTOS_ENABLE = "persist.sys.rianixia.integrity.photos_unlimited"
-        const val NETFLIX_ENABLE = "persist.sys.rianixia.integrity.netflix_unlock"
-        const val GAME_ENABLE = "persist.sys.rianixia.integrity.game_props"
-        const val GAME_CHANGED = "persist.sys.rianixia.integrity.gameprops-changed"
+        const val PIF_ENABLE = "persist.sys.rianixia.pif.enable"
+        const val PIF_AUTO_UPDATE = "persist.sys.rianixia.pif-auto"
+        const val PIF_AUTO_INTERVAL = "persist.sys.rianixia.pif-auto.interval"
+        
+        const val PHOTOS_ENABLE = "persist.sys.rianixia.photos.unlimited"
+        const val NETFLIX_ENABLE = "persist.sys.rianixia.netflix.unlock"
+        const val GAME_ENABLE = "persist.sys.rianixia.game.props"
+        const val GAME_CHANGED = "persist.sys.rianixia.game.changed"
     }
 
     init {
-        loadInitialState()
+        loadState()
     }
 
-    private fun loadInitialState() {
+    private fun loadState() {
         viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                ensureGamePropsFileExists()
+            // 1. Fast Load
+            val sysProps = withContext(Dispatchers.IO) {
+                mapOf(
+                    "pif" to getSystemProp(Props.PIF_ENABLE),
+                    "auto" to getSystemProp(Props.PIF_AUTO_UPDATE),
+                    "interval" to getSystemProp(Props.PIF_AUTO_INTERVAL),
+                    "photos" to getSystemProp(Props.PHOTOS_ENABLE),
+                    "netflix" to getSystemProp(Props.NETFLIX_ENABLE),
+                    "game" to getSystemProp(Props.GAME_ENABLE)
+                )
             }
 
-            // Load UI state from Prefs (Persist UI state locally)
-            val pifEnabled = prefs.getBoolean("pif_enabled", false)
-            val pifAuto = prefs.getBoolean("pif_auto_update", false)
-            val pifModeIdx = prefs.getInt("pif_update_mode", 0)
-            val photos = prefs.getBoolean("photos_enabled", false)
-            val netflix = prefs.getBoolean("netflix_enabled", false)
-            val gamePropsEnabled = prefs.getBoolean("gameprops_enabled", false)
-
-            // Initial Prop Sync
-            setSystemProp(Props.PIF_ENABLE, if(pifEnabled) "1" else "0")
-            setSystemProp(Props.PHOTOS_ENABLE, if(photos) "1" else "0")
-            setSystemProp(Props.NETFLIX_ENABLE, if(netflix) "1" else "0")
-            setSystemProp(Props.GAME_ENABLE, if(gamePropsEnabled) "1" else "0")
-
-            val profiles = withContext(Dispatchers.IO) { readGamePropsJson() }
-            val resolved = withContext(Dispatchers.IO) { resolvePackageInfo(profiles) }
-            val allApps = withContext(Dispatchers.IO) { loadAllInstalledApps() }
+            val intervalVal = sysProps["interval"] ?: "reboot"
+            val mode = if (intervalVal.contains("periodic", ignoreCase = true)) {
+                PifUpdateMode.PERIODIC
+            } else {
+                PifUpdateMode.ON_REBOOT
+            }
 
             _uiState.update {
                 it.copy(
-                    isPifEnabled = pifEnabled,
-                    isPifAutoUpdate = pifAuto,
-                    pifUpdateMode = PifUpdateMode.values().getOrElse(pifModeIdx) { PifUpdateMode.ON_REBOOT },
-                    isPhotosEnabled = photos, // UPDATED NAME
-                    isNetflixEnabled = netflix, // UPDATED NAME
-                    isGamePropsEnabled = gamePropsEnabled,
-                    gameProfiles = profiles,
-                    resolvedPackages = resolved,
-                    installedApps = allApps,
-                    isLoading = false
+                    isPifEnabled = sysProps["pif"] == "1" || sysProps["pif"] == "true",
+                    isPifAutoUpdate = sysProps["auto"] == "true" || sysProps["auto"] == "1",
+                    pifUpdateMode = mode,
+                    isPhotosEnabled = sysProps["photos"] == "1" || sysProps["photos"] == "true",
+                    isNetflixEnabled = sysProps["netflix"] == "1" || sysProps["netflix"] == "true",
+                    isGamePropsEnabled = sysProps["game"] == "1" || sysProps["game"] == "true",
+                    isLoading = false,
+                    hasUnsavedChanges = false // Ensure clean state on load
                 )
+            }
+
+            // 2. Heavy Load
+            launch(Dispatchers.IO) {
+                ensureGamePropsFileExists()
+                val profiles = readGamePropsJson()
+                val resolved = resolvePackageInfo(profiles)
+                
+                _uiState.update { 
+                    it.copy(gameProfiles = profiles, resolvedPackages = resolved) 
+                }
+
+                val allApps = loadAllInstalledApps()
+                _uiState.update { 
+                    it.copy(installedApps = allApps, isAppsLoading = false) 
+                }
+            }
+        }
+    }
+
+    // ==========================================
+    // System Prop Helpers
+    // ==========================================
+
+    private fun getSystemProp(key: String): String {
+        return try {
+            val process = Runtime.getRuntime().exec("getprop $key")
+            process.inputStream.bufferedReader().use { it.readText().trim() }
+        } catch (e: Exception) {
+            ""
+        }
+    }
+
+    private fun setSystemProp(key: String, value: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                Runtime.getRuntime().exec("setprop $key $value")
+            } catch (e: Exception) {
+                Log.e("IntegrityViewModel", "Failed to set prop $key", e)
             }
         }
     }
@@ -206,7 +249,6 @@ class IntegritySpoofViewModel(application: Application) : AndroidViewModel(appli
             }
             gamePropsFile.writeText(root.toString(2))
             
-            // Notify AI Service
             notifyGamePropsChanged()
             
         } catch (e: IOException) {
@@ -220,28 +262,53 @@ class IntegritySpoofViewModel(application: Application) : AndroidViewModel(appli
     }
 
     // ==========================================
-    // Import / Export / Reset
+    // Import / Export / Reset / Save
     // ==========================================
+
+    // NEW: Explicit Save Function
+    fun saveGamePropsChanges() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val currentProfiles = _uiState.value.gameProfiles
+            writeGamePropsJson(currentProfiles)
+            _uiState.update { it.copy(hasUnsavedChanges = false) }
+            
+            withContext(Dispatchers.Main) {
+                Toast.makeText(getApplication(), "Changes saved successfully", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     fun exportPresetToDownloads() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                if (!gamePropsFile.exists()) return@launch
-                
+                // Determine if we should export the FILE on disk or the current STATE
+                // Typically export exports the current state.
+                val profiles = _uiState.value.gameProfiles
+                // Construct JSON from state
+                val root = JSONObject()
+                profiles.forEach { profile ->
+                    val obj = JSONObject()
+                    obj.put("BRAND", profile.brand)
+                    obj.put("MANUFACTURER", profile.manufacturer)
+                    obj.put("MODEL", profile.model)
+                    if (profile.device.isNotEmpty()) obj.put("DEVICE", profile.device)
+                    val pkgArray = JSONArray()
+                    profile.packages.forEach { pkgArray.put(it) }
+                    obj.put("PKGNAMES", pkgArray)
+                    root.put(profile.key, obj)
+                }
+
                 val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
                 val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
                 val destFile = File(downloadsDir, "gameprops_export_$timestamp.json")
                 
-                gamePropsFile.copyTo(destFile, overwrite = true)
+                destFile.writeText(root.toString(2))
                 
                 withContext(Dispatchers.Main) {
                     Toast.makeText(getApplication(), "Saved to Downloads/gameprops_export_$timestamp.json", Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
                 Log.e("IntegrityViewModel", "Export failed", e)
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(getApplication(), "Export failed: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
             }
         }
     }
@@ -252,21 +319,19 @@ class IntegritySpoofViewModel(application: Application) : AndroidViewModel(appli
                 val contentResolver = getApplication<Application>().contentResolver
                 contentResolver.openInputStream(uri)?.use { input ->
                     val content = input.bufferedReader().use { it.readText() }
-                    // Validate JSON
-                    JSONObject(content) 
-                    
-                    // Write to internal file
+                    JSONObject(content) // Validate
                     gamePropsFile.writeText(content)
                 }
 
-                // Refresh State
                 val profiles = readGamePropsJson()
                 val resolved = resolvePackageInfo(profiles)
                 _uiState.update { 
-                    it.copy(gameProfiles = profiles, resolvedPackages = resolved) 
+                    it.copy(
+                        gameProfiles = profiles, 
+                        resolvedPackages = resolved,
+                        hasUnsavedChanges = false // Import writes immediately, so no pending changes
+                    ) 
                 }
-                
-                // Trigger Update
                 notifyGamePropsChanged()
                 
                 withContext(Dispatchers.Main) {
@@ -274,7 +339,6 @@ class IntegritySpoofViewModel(application: Application) : AndroidViewModel(appli
                 }
             } catch (e: Exception) {
                 Log.e("IntegrityViewModel", "Import failed", e)
-                // Trigger the error dialog state instead of a simple toast
                 _uiState.update { it.copy(showImportError = true) }
             }
         }
@@ -290,7 +354,11 @@ class IntegritySpoofViewModel(application: Application) : AndroidViewModel(appli
             val profiles = readGamePropsJson()
             val resolved = resolvePackageInfo(profiles)
             _uiState.update { 
-                it.copy(gameProfiles = profiles, resolvedPackages = resolved) 
+                it.copy(
+                    gameProfiles = profiles, 
+                    resolvedPackages = resolved,
+                    hasUnsavedChanges = false
+                ) 
             }
             notifyGamePropsChanged()
             withContext(Dispatchers.Main) {
@@ -300,23 +368,23 @@ class IntegritySpoofViewModel(application: Application) : AndroidViewModel(appli
     }
 
     // ==========================================
-    // Actions & Prop Binding
+    // Actions
     // ==========================================
 
     fun togglePif(enabled: Boolean) {
-        prefs.edit().putBoolean("pif_enabled", enabled).apply()
         _uiState.update { it.copy(isPifEnabled = enabled) }
         setSystemProp(Props.PIF_ENABLE, if(enabled) "1" else "0")
     }
 
     fun togglePifAutoUpdate(enabled: Boolean) {
-        prefs.edit().putBoolean("pif_auto_update", enabled).apply()
         _uiState.update { it.copy(isPifAutoUpdate = enabled) }
+        setSystemProp(Props.PIF_AUTO_UPDATE, if(enabled) "true" else "false")
     }
 
     fun setPifUpdateMode(mode: PifUpdateMode) {
-        prefs.edit().putInt("pif_update_mode", mode.ordinal).apply()
         _uiState.update { it.copy(pifUpdateMode = mode) }
+        val value = if (mode == PifUpdateMode.ON_REBOOT) "reboot" else "periodic"
+        setSystemProp(Props.PIF_AUTO_INTERVAL, value)
     }
 
     fun triggerPifUpdate() {
@@ -328,36 +396,22 @@ class IntegritySpoofViewModel(application: Application) : AndroidViewModel(appli
     }
 
     fun togglePhotosSpoof(enabled: Boolean) {
-        prefs.edit().putBoolean("photos_enabled", enabled).apply()
-        _uiState.update { it.copy(isPhotosEnabled = enabled) } // UPDATED NAME
+        _uiState.update { it.copy(isPhotosEnabled = enabled) }
         setSystemProp(Props.PHOTOS_ENABLE, if(enabled) "1" else "0")
     }
 
     fun toggleNetflixSpoof(enabled: Boolean) {
-        prefs.edit().putBoolean("netflix_enabled", enabled).apply()
-        _uiState.update { it.copy(isNetflixEnabled = enabled) } // UPDATED NAME
+        _uiState.update { it.copy(isNetflixEnabled = enabled) }
         setSystemProp(Props.NETFLIX_ENABLE, if(enabled) "1" else "0")
     }
 
     fun toggleGamePropsSpoof(enabled: Boolean) {
-        prefs.edit().putBoolean("gameprops_enabled", enabled).apply()
         _uiState.update { it.copy(isGamePropsEnabled = enabled) }
         setSystemProp(Props.GAME_ENABLE, if(enabled) "1" else "0")
     }
 
-    private fun setSystemProp(key: String, value: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                // Assuming standard root shell execution
-                Runtime.getRuntime().exec("setprop $key $value")
-            } catch (e: Exception) {
-                Log.e("IntegrityViewModel", "Failed to set prop $key", e)
-            }
-        }
-    }
-
     // ==========================================
-    // Profile Management & Helper
+    // Profile Management Helpers (Memory Only)
     // ==========================================
 
     private fun loadAllInstalledApps(): List<InstalledAppInfo> {
@@ -391,7 +445,7 @@ class IntegritySpoofViewModel(application: Application) : AndroidViewModel(appli
         if (currentList.any { it.key == key }) return
         val newProfile = GamePropProfile(key, "Generic", "Generic", "Model X", "", mutableListOf())
         currentList.add(newProfile)
-        saveAndRefresh(currentList)
+        updateLocalState(currentList)
     }
 
     fun updateProfileField(key: String, field: String, value: String) {
@@ -406,7 +460,7 @@ class IntegritySpoofViewModel(application: Application) : AndroidViewModel(appli
                 }
             } else profile
         }
-        saveAndRefresh(currentList)
+        updateLocalState(currentList)
     }
 
     fun addPackageToProfile(profileKey: String, packageName: String) {
@@ -418,7 +472,7 @@ class IntegritySpoofViewModel(application: Application) : AndroidViewModel(appli
                 profile.copy(packages = newPkgs)
             } else profile
         }
-        saveAndRefresh(currentList)
+        updateLocalState(currentList)
     }
 
     fun removePackageFromProfile(profileKey: String, packageName: String) {
@@ -429,19 +483,25 @@ class IntegritySpoofViewModel(application: Application) : AndroidViewModel(appli
                 profile.copy(packages = newPkgs)
             } else profile
         }
-        saveAndRefresh(currentList)
+        updateLocalState(currentList)
     }
 
     fun deleteProfile(key: String) {
         val currentList = _uiState.value.gameProfiles.filter { it.key != key }
-        saveAndRefresh(currentList)
+        updateLocalState(currentList)
     }
 
-    private fun saveAndRefresh(profiles: List<GamePropProfile>) {
+    // UPDATED: Updates Memory State Only - Doesn't Write to File
+    private fun updateLocalState(profiles: List<GamePropProfile>) {
         viewModelScope.launch(Dispatchers.IO) {
-            writeGamePropsJson(profiles)
             val resolved = resolvePackageInfo(profiles)
-            _uiState.update { it.copy(gameProfiles = profiles, resolvedPackages = resolved) }
+            _uiState.update { 
+                it.copy(
+                    gameProfiles = profiles, 
+                    resolvedPackages = resolved,
+                    hasUnsavedChanges = true // Mark as modified
+                ) 
+            }
         }
     }
 }

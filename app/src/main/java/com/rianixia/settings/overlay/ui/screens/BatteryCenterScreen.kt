@@ -11,9 +11,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.draggable
-import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -36,9 +33,9 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -142,46 +139,48 @@ fun BatteryCenterScreen(
                                     enter = expandVertically() + fadeIn(),
                                     exit = shrinkVertically() + fadeOut()
                                 ) {
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .frostedGlass(
-                                                backgroundColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
-                                                borderColor = Color.Transparent,
-                                                shape = RoundedCornerShape(16.dp)
-                                            )
-                                            .padding(16.dp),
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        Text(
-                                            stringResource(R.string.limit_charge_limit).uppercase(),
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            letterSpacing = 2.sp,
-                                            fontWeight = FontWeight.Black
-                                        )
-                                        Spacer(Modifier.height(12.dp))
-                                        
-                                        ChargeLimitSlider(
-                                            value = state.chargingConfig.autoCutLimit,
-                                            onValueChange = { viewModel.setAutoCutLimit(it.toFloat()) },
-                                            range = 40..100,
-                                            color = animatedColor
-                                        )
-                                    }
+                                    BatteryFeatureSlider(
+                                        title = stringResource(R.string.limit_charge_limit),
+                                        desc = "${stringResource(R.string.limit_stops_at)} ${state.chargingConfig.autoCutLimit}%",
+                                        value = state.chargingConfig.autoCutLimit.toFloat(),
+                                        onValueChange = { viewModel.setAutoCutLimit(it.toFloat()) },
+                                        range = 80f..100f,
+                                        steps = 3, // 80, 85, 90, 95, 100
+                                        color = animatedColor,
+                                        icon = Icons.Rounded.BatteryChargingFull
+                                    )
                                 }
                             }
 
                             // 2. AC BYPASS
-                            StrategyBreaker(
-                                title = stringResource(R.string.strategy_bypass_title),
-                                status = if (state.chargingConfig.bypassEnabled) stringResource(R.string.status_active) else stringResource(R.string.status_disabled),
-                                desc = stringResource(R.string.strategy_bypass_desc),
-                                isActive = state.chargingConfig.bypassEnabled,
-                                color = MaterialTheme.colorScheme.tertiary,
-                                icon = Icons.Rounded.Bolt,
-                                onClick = { viewModel.setBypassEnabled(!state.chargingConfig.bypassEnabled) }
-                            )
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                StrategyBreaker(
+                                    title = stringResource(R.string.strategy_bypass_title),
+                                    status = if (state.chargingConfig.bypassEnabled) stringResource(R.string.status_active) else stringResource(R.string.status_disabled),
+                                    desc = stringResource(R.string.strategy_bypass_desc),
+                                    isActive = state.chargingConfig.bypassEnabled,
+                                    color = MaterialTheme.colorScheme.tertiary,
+                                    icon = Icons.Rounded.Bolt,
+                                    onClick = { viewModel.setBypassEnabled(!state.chargingConfig.bypassEnabled) }
+                                )
+
+                                AnimatedVisibility(
+                                    visible = state.chargingConfig.bypassEnabled,
+                                    enter = expandVertically() + fadeIn(),
+                                    exit = shrinkVertically() + fadeOut()
+                                ) {
+                                    BatteryFeatureSlider(
+                                        title = stringResource(R.string.bypass_resume_title),
+                                        desc = stringResource(R.string.bypass_resume_desc, state.chargingConfig.bypassThreshold),
+                                        value = state.chargingConfig.bypassThreshold.toFloat(),
+                                        onValueChange = { viewModel.setBypassThreshold(it.toFloat()) },
+                                        range = 20f..80f,
+                                        steps = 2, // 20, 40, 60, 80
+                                        color = animatedColor,
+                                        icon = Icons.Rounded.Bolt
+                                    )
+                                }
+                            }
 
                             // 3. THERMAL CUTOFF
                             StrategyBreaker(
@@ -481,95 +480,72 @@ fun BatteryReactor(
 }
 
 // ==========================================
-// 3. FUEL ROD SLIDER
+// 3. BATTERY FEATURE SLIDER (Styled like AZenith)
 // ==========================================
 @Composable
-fun ChargeLimitSlider(
-    value: Int,
-    onValueChange: (Int) -> Unit,
-    range: IntRange,
-    color: Color
+private fun BatteryFeatureSlider(
+    title: String,
+    desc: String,
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    range: ClosedFloatingPointRange<Float>,
+    steps: Int,
+    color: Color,
+    icon: ImageVector
 ) {
-    var isDragging by remember { mutableStateOf(false) }
-    var rawValue by remember { mutableFloatStateOf(value.toFloat()) }
-    var sliderWidth by remember { mutableFloatStateOf(1f) } 
-
-    LaunchedEffect(value) {
-        if (!isDragging) {
-            rawValue = value.toFloat()
-        }
-    }
-    
-    val progress = ((rawValue - range.first) / (range.last - range.first)).coerceIn(0f, 1f)
-
-    val trackColor = MaterialTheme.colorScheme.surfaceVariant
-    val borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-    val hatchColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-    val handleColor = MaterialTheme.colorScheme.inverseSurface
-    val handleTextColor = MaterialTheme.colorScheme.inverseOnSurface
-    val textColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val animatedColor by animateColorAsState(targetValue = color, label = "sliderColor")
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(56.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(trackColor)
-            .border(1.dp, borderColor, RoundedCornerShape(12.dp))
-            .onSizeChanged { sliderWidth = it.width.toFloat() }
-            .draggable(
-                orientation = Orientation.Horizontal,
-                state = rememberDraggableState { delta ->
-                    val rangeSpan = range.last - range.first
-                    val valuePerPixel = rangeSpan.toFloat() / sliderWidth
-                    rawValue = (rawValue + (delta * valuePerPixel)).coerceIn(range.first.toFloat(), range.last.toFloat())
-                    
-                    val newValue = rawValue.roundToInt()
-                    if (newValue != value) onValueChange(newValue)
-                },
-                onDragStarted = { isDragging = true },
-                onDragStopped = { isDragging = false }
+            .frostedGlass(
+                backgroundColor = animatedColor.copy(alpha = 0.1f),
+                borderColor = animatedColor.copy(alpha = 0.3f),
+                shape = RoundedCornerShape(20.dp)
             )
+            .padding(16.dp)
     ) {
-        // Texture
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val step = 10.dp.toPx()
-            val count = (size.width / step).toInt()
-            for (i in 0..count) {
-                drawLine(hatchColor, Offset(i * step, 0f), Offset(i * step + step/2, size.height))
+        Column {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(animatedColor.copy(alpha = 0.2f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(icon, null, tint = animatedColor)
+                }
+                Spacer(Modifier.width(16.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                    Text(desc, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                }
+                Box(
+                    modifier = Modifier
+                        .background(animatedColor.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        "${value.roundToInt()}%",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = animatedColor
+                    )
+                }
             }
-        }
-        
-        // Active Fill
-        Box(
-            modifier = Modifier
-                .fillMaxHeight()
-                .fillMaxWidth(progress)
-                .background(Brush.horizontalGradient(listOf(color.copy(alpha = 0.3f), color)))
-        )
-        
-        // Labels & Handle
-        Row(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text("${range.first}%", style = MaterialTheme.typography.labelSmall, color = textColor)
-            
-            Box(
-                modifier = Modifier
-                    .background(handleColor, RoundedCornerShape(4.dp))
-                    .padding(horizontal = 8.dp, vertical = 2.dp)
-            ) {
-                Text(
-                    "$value%", 
-                    style = MaterialTheme.typography.bodyMedium, 
-                    fontWeight = FontWeight.Bold, 
-                    color = handleTextColor
+            Spacer(Modifier.height(12.dp))
+            Slider(
+                value = value,
+                onValueChange = onValueChange,
+                valueRange = range,
+                steps = steps,
+                colors = SliderDefaults.colors(
+                    thumbColor = animatedColor,
+                    activeTrackColor = animatedColor,
+                    inactiveTrackColor = animatedColor.copy(alpha = 0.2f)
                 )
-            }
-            
-            Text("${range.last}%", style = MaterialTheme.typography.labelSmall, color = textColor)
+            )
         }
     }
 }

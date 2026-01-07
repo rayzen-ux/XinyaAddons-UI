@@ -135,4 +135,3 @@ Contributions are welcome! Please feel free to submit issues, fork the repositor
 5. Open a Pull Request
 
 </div>
-```

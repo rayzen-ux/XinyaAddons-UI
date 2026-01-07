@@ -123,7 +123,7 @@ fun SystemScreen(
             item {
                 SystemPropsBank(
                     isFlagSecureDisabled = state.isFlagSecureDisabled,
-                    isRotationButtonForced = state.isRotationButtonForced,
+                    isRotationButtonHidden = state.isRotationButtonHidden, // FIXED: Now uses Hidden state
                     onToggleSecure = { viewModel.toggleFlagSecure(it) },
                     onToggleRotation = { viewModel.toggleRotationButton(it) }
                 )
@@ -261,7 +261,7 @@ fun SystemModuleCard(
 @Composable
 fun SystemPropsBank(
     isFlagSecureDisabled: Boolean,
-    isRotationButtonForced: Boolean,
+    isRotationButtonHidden: Boolean, // FIXED: Parameter name updated
     onToggleSecure: (Boolean) -> Unit,
     onToggleRotation: (Boolean) -> Unit
 ) {
@@ -297,7 +297,7 @@ fun SystemPropsBank(
             title = stringResource(R.string.sys_rotation_title),
             subtitle = stringResource(R.string.sys_rotation_desc),
             icon = Icons.Rounded.ScreenRotation,
-            checked = isRotationButtonForced,
+            checked = isRotationButtonHidden, // Checks = Hidden
             onCheckedChange = onToggleRotation
         )
     }

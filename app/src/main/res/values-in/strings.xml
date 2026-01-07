@@ -328,4 +328,15 @@
     <string name="about_up_to_date">Anda menggunakan versi terbaru.</string>
 
     <string name="settings_title">Pengaturan Aplikasi</string>
+    <string name="io_scheduler_changed_success">IO Scheduler berhasil diubah ke %1$s</string>
+
+    <string name="pref_category_general">Umum</string>
+    <string name="pref_launcher_icon_title">Tampilkan di Beranda</string>
+    <string name="pref_launcher_icon_desc">Aktifkan untuk menampilkan ikon aplikasi di laci aplikasi.</string>
+    <string name="banner_support_title">Dukung Pengembangan</string>
+    <string name="banner_support_desc">Suka dengan Xinya Toolkit? Dukungan Anda mempercepat pengembangan dan menghadirkan fitur baru.</string>
+    <string name="btn_donate">Donasi Sekarang</string>
+
+    <string name="bypass_resume_title">Ambang Lanjut Pengisian</string>
+    <string name="bypass_resume_desc">Lanjut mengisi daya pada %1$s%%</string>
 </resources>

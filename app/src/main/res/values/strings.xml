@@ -140,8 +140,9 @@
     <string name="sys_tuner_title">SystemUI Tuner</string>
     <string name="sys_flag_secure_title">Disable Flag Secure</string>
     <string name="sys_flag_secure_desc">Allows screenshots and screen recording in secure applications and windows.</string>
-    <string name="sys_rotation_title">Floating Rotation Button</string>
-    <string name="sys_rotation_desc">Force enables the contextual rotation button in the navigation bar when rotated.</string>
+    
+    <string name="sys_rotation_title">Hide Rotation Button</string>
+    <string name="sys_rotation_desc">Hides the contextual rotation button in the navigation bar when rotated.</string>
 
     <string name="spoof_dashboard">Identity Spoofing</string>
     <string name="pif_section_title">Play Integrity Fix</string>
@@ -328,4 +329,15 @@
     <string name="about_up_to_date">You are on the latest version.</string>
 
     <string name="settings_title">App Settings</string>
+    <string name="io_scheduler_changed_success">IO Scheduler successfully changed to %1$s</string>
+
+    <string name="pref_category_general">General</string>
+    <string name="pref_launcher_icon_title">Show in Homescreen</string>
+    <string name="pref_launcher_icon_desc">Enable to show the app icon in your launcher app drawer.</string>
+    <string name="banner_support_title">Support Development</string>
+    <string name="banner_support_desc">Enjoying Xinya Toolkit? Your support accelerates development and brings new features to life.</string>
+    <string name="btn_donate">Donate Now</string>
+
+    <string name="bypass_resume_title">Resume Threshold</string>
+    <string name="bypass_resume_desc">Resumes charging at %1$s%%</string>
 </resources>

@@ -1,11 +1,8 @@
 package com.rianixia.settings.overlay.ui.screens
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,8 +13,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -27,6 +24,7 @@ import androidx.navigation.NavController
 import com.rianixia.settings.overlay.R
 import com.rianixia.settings.overlay.ui.components.*
 import com.rianixia.settings.overlay.ui.viewmodel.IOViewModel
+import com.rianixia.settings.overlay.ui.viewmodel.IoEvent
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
 
@@ -38,10 +36,24 @@ fun IoSchedulerScreen(
     val state by viewModel.uiState.collectAsState()
     val hazeState = remember { HazeState() }
     var showInfoDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
     
     // Theme Colors
     val primaryColor = MaterialTheme.colorScheme.secondary
     val warningColor = MaterialTheme.colorScheme.error
+
+    // Event Listener for Toasts
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is IoEvent.SchedulerChanged -> {
+                    // Toast Logic: Language-aware formatting
+                    val msg = context.getString(R.string.io_scheduler_changed_success, event.schedulerName)
+                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
 
     MaterialGlassScaffold {
         Box(Modifier.fillMaxSize()) {
@@ -140,7 +152,7 @@ fun IoSchedulerScreen(
                                 stringResource(R.string.io_block_map),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Black,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                                 letterSpacing = 2.sp,
                                 modifier = Modifier.padding(start = 8.dp, bottom = 4.dp, top = 8.dp)
                             )
@@ -266,8 +278,8 @@ private fun DeviceBlockCard(
         
         // Info
         Column(Modifier.weight(1f)) {
-            Text(name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-            Text(path, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
+            Text(name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            Text(path, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         
         // Status
@@ -335,7 +347,6 @@ private fun IoInfoDialog(onDismiss: () -> Unit) {
 
 @Composable
 private fun BulletPoint(title: String, desc: String) {
-    // Fixed: Replaced 'crossAxisAlignment' (Flutter) with 'verticalAlignment' (Compose)
     Row(verticalAlignment = Alignment.Top) { 
         Text("•", fontWeight = FontWeight.Bold, modifier = Modifier.padding(end = 8.dp))
         Column {
