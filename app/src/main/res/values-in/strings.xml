@@ -339,4 +339,14 @@
 
     <string name="bypass_resume_title">Ambang Lanjut Pengisian</string>
     <string name="bypass_resume_desc">Lanjut mengisi daya pada %1$s%%</string>
+
+    <string name="title_batt_health">Kesehatan Baterai</string>
+    <string name="title_batt_cycles">Siklus Pengisian</string>
+    <string name="diag_cycles">Siklus</string>
+    
+    <string name="dialog_report_title_fmt">Tentang %1$s</string>
+    <string name="dialog_report_desc_1">Nilai ini dibaca langsung dari jalur kernel sistem:</string>
+    <string name="dialog_report_desc_2">Jika Anda yakin nilai ini salah (angka palsu atau tidak masuk akal), Anda dapat melaporkannya ke pengembang.</string>
+    <string name="dialog_report_desc_3">Penting: Saat melapor, harap cantumkan Model Perangkat, versi ROM, dan alasan mengapa menurut Anda jalur tersebut tidak valid.</string>
+    <string name="btn_report_issue">Laporkan Masalah</string>
 </resources>

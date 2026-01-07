@@ -336,9 +336,9 @@ fun BatteryCenterScreen(
 // 1. DIALOG COMPONENTS
 // ==========================================
 
-enum class ReportType(val title: String, val path: String) {
-    HEALTH("Battery Health", "/sys/devices/platform/charger/battery_health_percent"),
-    CYCLES("Charge Cycles", "/sys/devices/platform/charger/tran_battery_cycle")
+enum class ReportType(val titleRes: Int, val path: String) {
+    HEALTH(R.string.title_batt_health, "/sys/devices/platform/charger/battery_health_percent"),
+    CYCLES(R.string.title_batt_cycles, "/sys/devices/platform/charger/tran_battery_cycle")
 }
 
 @Composable
@@ -351,7 +351,7 @@ fun ReportInfoDialog(
         onDismissRequest = onDismiss,
         title = { 
             Text(
-                text = "About ${type.title}", 
+                text = stringResource(R.string.dialog_report_title_fmt, stringResource(type.titleRes)), 
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             ) 
@@ -359,7 +359,7 @@ fun ReportInfoDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Text(
-                    text = "This value is read directly from the system kernel path:",
+                    text = stringResource(R.string.dialog_report_desc_1),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 
@@ -378,12 +378,12 @@ fun ReportInfoDialog(
                 }
 
                 Text(
-                    text = "If you believe this value is incorrect (false number or unreasonable), you can report it to the developer.",
+                    text = stringResource(R.string.dialog_report_desc_2),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 
                 Text(
-                    text = "Important: When reporting, please state your Device Model, ROM version, and why you think the path is invalid.",
+                    text = stringResource(R.string.dialog_report_desc_3),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error
                 )
@@ -394,7 +394,7 @@ fun ReportInfoDialog(
                 onClick = onReport,
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer)
             ) {
-                Text("Report Issue")
+                Text(stringResource(R.string.btn_report_issue))
             }
         },
         dismissButton = {
@@ -732,7 +732,7 @@ fun DiagnosticRail(
             Icon(Icons.Rounded.Autorenew, null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(20.dp))
             Spacer(Modifier.height(4.dp))
             Text(cycles, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-            Text("Cycles", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.diag_cycles), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

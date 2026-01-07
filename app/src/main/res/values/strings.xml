@@ -340,4 +340,14 @@
 
     <string name="bypass_resume_title">Resume Threshold</string>
     <string name="bypass_resume_desc">Resumes charging at %1$s%%</string>
+
+    <string name="title_batt_health">Battery Health</string>
+    <string name="title_batt_cycles">Charge Cycles</string>
+    <string name="diag_cycles">Cycles</string>
+    
+    <string name="dialog_report_title_fmt">About %1$s</string>
+    <string name="dialog_report_desc_1">This value is read directly from the system kernel path:</string>
+    <string name="dialog_report_desc_2">If you believe this value is incorrect (false number or unreasonable), you can report it to the developer.</string>
+    <string name="dialog_report_desc_3">Important: When reporting, please state your Device Model, ROM version, and why you think the path is invalid.</string>
+    <string name="btn_report_issue">Report Issue</string>
 </resources>
