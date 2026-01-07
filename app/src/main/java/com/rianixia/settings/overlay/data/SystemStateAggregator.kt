@@ -206,21 +206,35 @@ class SystemStateAggregator(private val context: Context) {
             val tempInt = batteryStatus?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0) ?: 0
             val tempC = tempInt / 10f
 
-            val healthInt = batteryStatus?.getIntExtra(BatteryManager.EXTRA_HEALTH, 1) ?: 1
-            val healthText = when(healthInt) {
-                BatteryManager.BATTERY_HEALTH_GOOD -> "Good"
-                BatteryManager.BATTERY_HEALTH_OVERHEAT -> "Overheat"
-                BatteryManager.BATTERY_HEALTH_DEAD -> "Dead"
-                BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE -> "Over Voltage"
-                else -> "Check"
+            // Read specific nodes for health and cycles with Fallback
+            var healthPercentVal = readSysFs("/sys/devices/platform/charger/battery_health_percent")
+            if (healthPercentVal.isNullOrEmpty()) {
+                val fallback = getSystemProperty("persist.sys.rianixia.battery.health")
+                // Only use fallback if it's not empty, otherwise keep null to eventually show "--"
+                healthPercentVal = if (fallback.isNotEmpty()) fallback else null
             }
-            
-            val tech = batteryStatus?.getStringExtra(BatteryManager.EXTRA_TECHNOLOGY) ?: "Li-ion"
+
+            var cycleCountVal = readSysFs("/sys/devices/platform/charger/tran_battery_cycle")
+            if (cycleCountVal.isNullOrEmpty()) {
+                val fallback = getSystemProperty("persist.sys.rianixia.battery.cycles")
+                cycleCountVal = if (fallback.isNotEmpty()) fallback else null
+            }
 
             _state.update { 
-                it.copy(batteryInfo = BatteryInfo(level, statusText, tempC, healthText, isCharging, tech))
+                it.copy(
+                    batteryInfo = BatteryInfo(
+                        levelPercent = level,
+                        status = statusText,
+                        temperature = tempC,
+                        healthPercent = healthPercentVal ?: "--",
+                        cycleCount = cycleCountVal ?: "--",
+                        isCharging = isCharging
+                    )
+                )
             }
-        } catch (e: Exception) { }
+        } catch (e: Exception) { 
+            e.printStackTrace()
+        }
     }
 
     private fun updateThermalState() {
@@ -245,14 +259,10 @@ class SystemStateAggregator(private val context: Context) {
     
     private fun updateCpuState() {
         try {
-            // Attempt to read current governor from cpu0
             var gov = readSysFs("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor")
-            
-            // Fallback to property if file read fails (permission denied)
             if (gov.isNullOrEmpty() || gov == "unknown") {
                 gov = getSystemProperty("persist.sys.rianixia.cpu.gov")
             }
-            
             if (gov.isNullOrEmpty()) gov = "unknown"
             
             var maxFreq = 0L
@@ -301,9 +311,7 @@ class SystemStateAggregator(private val context: Context) {
 
     private fun readSysFs(path: String): String? {
         return try {
-            // Try standard read
             File(path).takeIf { it.exists() && it.canRead() }?.readText()?.trim()
-                // Fallback to cat process
                 ?: try {
                     val proc = Runtime.getRuntime().exec(arrayOf("cat", path))
                     val result = proc.inputStream.bufferedReader().readText().trim()

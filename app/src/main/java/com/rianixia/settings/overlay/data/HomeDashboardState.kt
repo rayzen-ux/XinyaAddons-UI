@@ -11,6 +11,7 @@ data class EnforceDozeConfig(
     val disableWifi: Boolean = false,
     val disableData: Boolean = false
 )
+
 data class HomeDashboardState(
     val deviceInfo: DeviceInfo = DeviceInfo(),
     val batteryInfo: BatteryInfo = BatteryInfo(),
@@ -41,9 +42,9 @@ data class BatteryInfo(
     val levelPercent: Int = 0,
     val status: String = "Discharging",
     val temperature: Float = 0f,
-    val health: String = "Good",
-    val isCharging: Boolean = false,
-    val technology: String = ""
+    val healthPercent: String = "--", // Changed from generic health text
+    val cycleCount: String = "--",    // Changed from technology
+    val isCharging: Boolean = false
 )
 
 data class CpuState(
@@ -57,7 +58,6 @@ data class ThermalState(
     val summary: String = "Normal",
     val temperature: Float = 0f,
     val color: Long = 0xFF4CAF50,
-    // New Fields for Control
     val activeProfile: ThermalProfile = ThermalProfile.DEFAULT,
     val customThrottleLimit: Int = 45
 )

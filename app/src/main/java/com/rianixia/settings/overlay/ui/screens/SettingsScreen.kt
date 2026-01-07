@@ -133,7 +133,13 @@ private fun SettingsToggle(
         Spacer(Modifier.width(16.dp))
         
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            // Fix: Explicitly set color to onSurface to prevent black text on dark background
+            Text(
+                text = title, 
+                style = MaterialTheme.typography.titleMedium, 
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
             Text(desc, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         

@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -58,6 +59,10 @@ fun BatteryCenterScreen(
     val state by viewModel.uiState.collectAsState()
     var showGuideDialog by remember { mutableStateOf(false) }
     
+    // Reporting Dialog State
+    var showReportDialog by remember { mutableStateOf<ReportType?>(null) }
+    val uriHandler = LocalUriHandler.current
+
     // Theme Color Logic
     val statusColor = when {
         state.batteryInfo.temperature > 40 -> MaterialTheme.colorScheme.error 
@@ -108,9 +113,11 @@ fun BatteryCenterScreen(
                     item {
                         DiagnosticRail(
                             temp = state.batteryInfo.temperature,
-                            health = state.batteryInfo.health,
-                            tech = state.batteryInfo.technology,
-                            color = animatedColor
+                            healthPercent = state.batteryInfo.healthPercent,
+                            cycles = state.batteryInfo.cycleCount,
+                            color = animatedColor,
+                            onHealthClick = { showReportDialog = ReportType.HEALTH },
+                            onCyclesClick = { showReportDialog = ReportType.CYCLES }
                         )
                     }
 
@@ -315,11 +322,91 @@ fun BatteryCenterScreen(
     if (showGuideDialog) {
         PowerGuideDialog { showGuideDialog = false }
     }
+
+    showReportDialog?.let { type ->
+        ReportInfoDialog(
+            type = type,
+            onDismiss = { showReportDialog = null },
+            onReport = { uriHandler.openUri("https://t.me/xiayap") }
+        )
+    }
 }
 
 // ==========================================
 // 1. DIALOG COMPONENTS
 // ==========================================
+
+enum class ReportType(val title: String, val path: String) {
+    HEALTH("Battery Health", "/sys/devices/platform/charger/battery_health_percent"),
+    CYCLES("Charge Cycles", "/sys/devices/platform/charger/tran_battery_cycle")
+}
+
+@Composable
+fun ReportInfoDialog(
+    type: ReportType,
+    onDismiss: () -> Unit,
+    onReport: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { 
+            Text(
+                text = "About ${type.title}", 
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            ) 
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text(
+                    text = "This value is read directly from the system kernel path:",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                        .padding(12.dp)
+                ) {
+                    Text(
+                        text = type.path,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                Text(
+                    text = "If you believe this value is incorrect (false number or unreasonable), you can report it to the developer.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                
+                Text(
+                    text = "Important: When reporting, please state your Device Model, ROM version, and why you think the path is invalid.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onReport,
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer)
+            ) {
+                Text("Report Issue")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.btn_got_it))
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 6.dp,
+        shape = RoundedCornerShape(28.dp)
+    )
+}
 
 @Composable
 fun PowerGuideDialog(onDismiss: () -> Unit) {
@@ -587,9 +674,11 @@ fun SettingSwitch(label: String, checked: Boolean, onCheckedChange: (Boolean) ->
 @Composable
 fun DiagnosticRail(
     temp: Float,
-    health: String,
-    tech: String,
-    color: Color
+    healthPercent: String,
+    cycles: String,
+    color: Color,
+    onHealthClick: () -> Unit,
+    onCyclesClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -604,6 +693,7 @@ fun DiagnosticRail(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
+        // Temp (Non-clickable for now)
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(Icons.Rounded.Thermostat, null, tint = color, modifier = Modifier.size(20.dp))
             Spacer(Modifier.height(4.dp))
@@ -613,20 +703,36 @@ fun DiagnosticRail(
         
         Box(Modifier.width(1.dp).height(32.dp).background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)))
 
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        // Health (Clickable)
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .clickable { onHealthClick() }
+                .padding(4.dp)
+        ) {
             Icon(Icons.Rounded.Favorite, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
             Spacer(Modifier.height(4.dp))
-            Text(health, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            // Display formatted percent if it's a number, otherwise just the raw value
+            val displayHealth = if(healthPercent.all { it.isDigit() }) "$healthPercent%" else healthPercent
+            Text(displayHealth, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
             Text(stringResource(R.string.diag_health), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
 
         Box(Modifier.width(1.dp).height(32.dp).background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)))
 
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(Icons.Rounded.Memory, null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(20.dp))
+        // Cycles (Clickable)
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .clickable { onCyclesClick() }
+                .padding(4.dp)
+        ) {
+            Icon(Icons.Rounded.Autorenew, null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(20.dp))
             Spacer(Modifier.height(4.dp))
-            Text(tech.ifEmpty { stringResource(R.string.batt_tech_default) }, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-            Text(stringResource(R.string.diag_chem), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(cycles, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            Text("Cycles", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

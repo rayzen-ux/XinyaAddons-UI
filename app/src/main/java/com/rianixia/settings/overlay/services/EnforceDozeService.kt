@@ -45,9 +45,10 @@ class EnforceDozeService : Service() {
         super.onCreate()
         powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
         createNotificationChannel()
-        registerScreenReceiver()
         reloadSettings()
         useRoot = ShellUtils.checkRoot()
+        // Register receiver after root check to ensure executeCommand works correctly if needed immediately
+        registerScreenReceiver()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -56,8 +57,6 @@ class EnforceDozeService : Service() {
 
         if (intent?.action == ACTION_RELOAD_SETTINGS) {
             reloadSettings()
-            // Optional: If you want immediate application of new settings while screen is off,
-            // you can uncomment the next lines. Otherwise, it waits for next screen cycle.
             /*
             if (!powerManager.isInteractive) {
                 scheduleDoze(dozeDelayMs)
@@ -88,10 +87,20 @@ class EnforceDozeService : Service() {
         screenReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 when (intent.action) {
-                    Intent.ACTION_SCREEN_OFF -> scheduleDoze(dozeDelayMs)
+                    Intent.ACTION_SCREEN_OFF -> {
+                        // Global Screen State Monitor: 0 = OFF
+                        serviceScope.launch(Dispatchers.IO) {
+                            executeCommand("setprop persist.sys.rianixia.screen_state 0")
+                        }
+                        scheduleDoze(dozeDelayMs)
+                    }
                     Intent.ACTION_SCREEN_ON -> {
+                        // Global Screen State Monitor: 1 = ON
+                        serviceScope.launch(Dispatchers.IO) {
+                            executeCommand("setprop persist.sys.rianixia.screen_state 1")
+                            exitDoze() 
+                        }
                         dozeJob?.cancel()
-                        serviceScope.launch(Dispatchers.IO) { exitDoze() }
                     }
                 }
             }
@@ -143,8 +152,9 @@ class EnforceDozeService : Service() {
                 Log.d(TAG, "Sensor Result: $output")
             } else {
                 // Non-root cannot use dumpsys sensorservice restrict. Use Prop Fallback.
+                // Logic Inverted: false = disabled/restricted (to match wifi/data logic requested)
                 Log.w(TAG, "Action: Restricting Sensors (via Prop Fallback)")
-                executeCommand("setprop persist.sys.rianixia.enforcedoze.sensors true")
+                executeCommand("setprop persist.sys.rianixia.enforcedoze.sensors false")
             }
         }
 
@@ -185,7 +195,8 @@ class EnforceDozeService : Service() {
                 executeCommand("dumpsys sensorservice enable")
             } else {
                 // Prop Fallback
-                executeCommand("setprop persist.sys.rianixia.enforcedoze.sensors false")
+                // Logic Inverted: true = enabled (to match wifi/data logic requested)
+                executeCommand("setprop persist.sys.rianixia.enforcedoze.sensors true")
             }
         }
 
