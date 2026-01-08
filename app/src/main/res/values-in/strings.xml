@@ -276,6 +276,9 @@
     <string name="uv_input_hint">Offset (mV)</string>
     <string name="uv_notes_title">CATATAN TEKNIS</string>
     <string name="uv_notes_text">• Domain EEM berbeda stabilitasnya per perangkat.\n• Beban transien dapat memicu freeze bahkan pada offset rendah.\n• Penskalaan keamanan tidak linear.</string>
+    <string name="uv_not_supported_title">Fitur Tidak Tersedia</string>
+    <string name="uv_not_supported_desc">Maaf, perangkat Anda tidak mendukung kontrol Undervolt.</string>
+    <string name="btn_go_back">Kembali</string>
 
     <string name="az_protocols_title">PROTOKOL PERFORMA</string>
     <string name="az_freq_title">Batas Frek Maks</string>

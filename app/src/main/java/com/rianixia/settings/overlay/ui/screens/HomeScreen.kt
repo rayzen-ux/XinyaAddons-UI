@@ -151,13 +151,16 @@ fun HomeScreen(
                                     color = MaterialTheme.colorScheme.tertiary,
                                     onClick = { navController.navigate("azenith") } // Matches AZenith route
                                 )
-                                QuickProtocolCard(
-                                    title = stringResource(R.string.protocol_efficiency),
-                                    icon = Icons.Rounded.Eco,
-                                    modifier = Modifier.weight(1f),
-                                    color = MaterialTheme.colorScheme.secondary,
-                                    onClick = { navController.navigate("undervolt") } // Matches Undervolt route
-                                )
+                                
+                                if (state.isUndervoltSupported) {
+                                    QuickProtocolCard(
+                                        title = stringResource(R.string.protocol_efficiency),
+                                        icon = Icons.Rounded.Eco,
+                                        modifier = Modifier.weight(1f),
+                                        color = MaterialTheme.colorScheme.secondary,
+                                        onClick = { navController.navigate("undervolt") } // Matches Undervolt route
+                                    )
+                                }
                             }
                         }
                     }

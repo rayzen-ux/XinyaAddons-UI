@@ -173,14 +173,20 @@ class SystemStateAggregator(private val context: Context) {
         val bypassVal = getSystemProperty("persist.sys.rianixia.bypass_charge.threshold").toIntOrNull() ?: 20
         val tempState = getSystemProperty("persist.sys.rianixia.thermal_charge_cut-off.state") == "1"
 
+        // New feature support check
+        val undervoltSupport = getSystemProperty("persist.sys.rianixia.undervolt.support") == "1"
+
         _state.update {
-            it.copy(chargingConfig = ChargingConfig(
-                autoCutEnabled = autoCutState,
-                autoCutLimit = autoCutVal,
-                bypassEnabled = bypassState,
-                bypassThreshold = bypassVal,
-                tempCutoffEnabled = tempState
-            ))
+            it.copy(
+                chargingConfig = ChargingConfig(
+                    autoCutEnabled = autoCutState,
+                    autoCutLimit = autoCutVal,
+                    bypassEnabled = bypassState,
+                    bypassThreshold = bypassVal,
+                    tempCutoffEnabled = tempState
+                ),
+                isUndervoltSupported = undervoltSupport
+            )
         }
     }
 
@@ -341,4 +347,4 @@ class SystemStateAggregator(private val context: Context) {
     fun onCleared() {
         scope.cancel()
     }
-}
+}                                                                                                                                                           

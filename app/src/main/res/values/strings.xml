@@ -277,6 +277,9 @@
     <string name="uv_input_hint">Offset (mV)</string>
     <string name="uv_notes_title">ENGINEERING NOTES</string>
     <string name="uv_notes_text">• EEM domains differ in stability per device.\n• Transient loads can trigger freeze even at low offsets.\n• Safety scaling is non-linear.</string>
+    <string name="uv_not_supported_title">Feature Not Available</string>
+    <string name="uv_not_supported_desc">Sorry, your device does not support Undervolt controls.</string>
+    <string name="btn_go_back">Go Back</string>
 
     <string name="az_protocols_title">PERFORMANCE PROTOCOLS</string>
     <string name="az_freq_title">Limit Max Freq</string>

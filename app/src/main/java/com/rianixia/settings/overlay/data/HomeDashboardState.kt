@@ -20,7 +20,8 @@ data class HomeDashboardState(
     val chargingConfig: ChargingConfig = ChargingConfig(),
     val uptime: String = "00:00:00",
     val deepSleep: String = "0% · 0h 0m",
-    val enforceDozeConfig: EnforceDozeConfig = EnforceDozeConfig()
+    val enforceDozeConfig: EnforceDozeConfig = EnforceDozeConfig(),
+    val isUndervoltSupported: Boolean = false
 )
 
 data class ChargingConfig(
@@ -42,8 +43,8 @@ data class BatteryInfo(
     val levelPercent: Int = 0,
     val status: String = "Discharging",
     val temperature: Float = 0f,
-    val healthPercent: String = "--", // Changed from generic health text
-    val cycleCount: String = "--",    // Changed from technology
+    val healthPercent: String = "--", 
+    val cycleCount: String = "--",    
     val isCharging: Boolean = false
 )
 

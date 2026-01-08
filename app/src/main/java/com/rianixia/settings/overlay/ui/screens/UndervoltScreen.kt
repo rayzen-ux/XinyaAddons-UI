@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -102,6 +103,18 @@ data class UndervoltState(
 // ==========================================
 object PropManager {
     private const val PREFIX = "persist.sys.rianixia.undervolt-cluster."
+    private const val SUPPORT_KEY = "persist.sys.rianixia.undervolt.support"
+
+    fun isSupported(): Boolean {
+        return try {
+            val p = Runtime.getRuntime().exec("getprop $SUPPORT_KEY")
+            val reader = BufferedReader(InputStreamReader(p.inputStream))
+            val line = reader.readLine()?.trim()
+            line == "1"
+        } catch (e: Exception) {
+            false
+        }
+    }
 
     fun get(key: String, default: Int): Int {
         return try {
@@ -134,6 +147,7 @@ fun UndervoltScreen(navController: NavController) {
     // State to track initial loaded values for diffing
     var initialState by remember { mutableStateOf(UndervoltState()) }
     var isLoaded by remember { mutableStateOf(false) }
+    var isSupported by remember { mutableStateOf(true) } // Assume supported initially to prevent flicker, verified in LaunchedEffect
 
     // Dialog States
     var showRiskStage1 by remember { mutableStateOf(false) }
@@ -153,6 +167,16 @@ fun UndervoltScreen(navController: NavController) {
     // Load Props on Start
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
+            // 1. Check Support First
+            if (!PropManager.isSupported()) {
+                withContext(Dispatchers.Main) {
+                    isSupported = false
+                    isLoaded = true
+                }
+                return@withContext
+            }
+
+            // 2. Load Params if Supported
             val loadedCpu = state.cpuParams.map { it.copy(value = PropManager.get(it.propKey, 0)) }
             val loadedGpu = state.gpuParams.map { it.copy(value = PropManager.get(it.propKey, 0)) }
             
@@ -168,6 +192,7 @@ fun UndervoltScreen(navController: NavController) {
                 state = loadedState
                 initialState = loadedState
                 isLoaded = true
+                isSupported = true
             }
         }
     }
@@ -221,17 +246,56 @@ fun UndervoltScreen(navController: NavController) {
 
     MaterialGlassScaffold {
         Box(Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    // Apply hazeSource here
-                    .hazeSource(state = hazeState)
-            ) {
-                if (!isLoaded) {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                    }
-                } else {
+            
+            if (!isLoaded) {
+                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                }
+            } else if (!isSupported) {
+                 // NOT SUPPORTED UI
+                 Column(
+                     modifier = Modifier
+                         .fillMaxSize()
+                         .padding(32.dp),
+                     verticalArrangement = Arrangement.Center,
+                     horizontalAlignment = Alignment.CenterHorizontally
+                 ) {
+                     Icon(
+                         imageVector = Icons.Rounded.Cancel,
+                         contentDescription = null,
+                         tint = MaterialTheme.colorScheme.error,
+                         modifier = Modifier.size(64.dp)
+                     )
+                     Spacer(Modifier.height(16.dp))
+                     Text(
+                         text = stringResource(R.string.uv_not_supported_title),
+                         style = MaterialTheme.typography.headlineSmall,
+                         fontWeight = FontWeight.Bold,
+                         color = MaterialTheme.colorScheme.onSurface
+                     )
+                     Spacer(Modifier.height(8.dp))
+                     Text(
+                         text = stringResource(R.string.uv_not_supported_desc),
+                         style = MaterialTheme.typography.bodyMedium,
+                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                         textAlign = TextAlign.Center
+                     )
+                     Spacer(Modifier.height(32.dp))
+                     Button(
+                         onClick = { navController.popBackStack() },
+                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
+                     ) {
+                         Text(stringResource(R.string.btn_go_back))
+                     }
+                 }
+            } else {
+                // MAIN SUPPORTED UI
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        // Apply hazeSource here
+                        .hazeSource(state = hazeState)
+                ) {
                     // MAIN CONTENT (Bouncy Scroll)
                     BouncyLazyColumn(
                         modifier = Modifier.fillMaxSize(),
@@ -382,28 +446,31 @@ fun UndervoltScreen(navController: NavController) {
                 modifier = Modifier.align(Alignment.TopCenter),
                 addStatusBarPadding = false,
                 actions = {
-                    Surface(
-                        onClick = { showInfoDialog = true },
-                        shape = CircleShape,
-                        shadowElevation = 8.dp,
-                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
-                        contentColor = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.size(40.dp).border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f), CircleShape)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Rounded.Info,
-                                contentDescription = stringResource(R.string.info),
-                                modifier = Modifier.size(20.dp)
-                            )
+                    // Only show info if supported and loaded
+                    if(isSupported && isLoaded) {
+                        Surface(
+                            onClick = { showInfoDialog = true },
+                            shape = CircleShape,
+                            shadowElevation = 8.dp,
+                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                            contentColor = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(40.dp).border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f), CircleShape)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Info,
+                                    contentDescription = stringResource(R.string.info),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
                         }
                     }
                 }
             )
 
-            // Save FAB (Only Visible when changes exist)
+            // Save FAB (Only Visible when changes exist AND supported)
             AnimatedVisibility(
-                visible = hasChanges,
+                visible = hasChanges && isSupported,
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically(),
                 modifier = Modifier
