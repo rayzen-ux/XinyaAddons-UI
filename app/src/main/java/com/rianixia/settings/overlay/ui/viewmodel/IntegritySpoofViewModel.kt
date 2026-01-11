@@ -10,7 +10,7 @@ import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -80,7 +80,9 @@ class IntegritySpoofViewModel(application: Application) : AndroidViewModel(appli
     private val gamePropsFile = File(application.filesDir, "gameprops.json")
     
     // Manual Modifications Required:
-    // None. The code is self-contained. 
+    // 1. Ensure an init service named 'pif-updater_auto' is defined in your init.rc (e.g., /vendor/etc/init/hw/init.rc or similar).
+    // 2. The 'pif-updater_auto' service must execute the binary that updates /data/PIF.apk.
+    // 3. Ensure the service has the correct sepolicy to write to /data/PIF.apk.
 
     // System Properties Constants
     private object Props {
@@ -92,6 +94,11 @@ class IntegritySpoofViewModel(application: Application) : AndroidViewModel(appli
         const val NETFLIX_ENABLE = "persist.sys.rianixia.netflix.unlock"
         const val GAME_ENABLE = "persist.sys.rianixia.game.props"
         const val GAME_CHANGED = "persist.sys.rianixia.game.changed"
+        
+        // Service Control
+        const val CTL_START = "ctl.start"
+        const val SVC_PIF_UPDATER = "pif-updater_auto"
+        const val SVC_STATUS_PREFIX = "init.svc."
     }
 
     init {
@@ -166,10 +173,38 @@ class IntegritySpoofViewModel(application: Application) : AndroidViewModel(appli
     private fun setSystemProp(key: String, value: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
+                // For simple props
                 Runtime.getRuntime().exec("setprop $key $value")
             } catch (e: Exception) {
                 Log.e("IntegrityViewModel", "Failed to set prop $key", e)
             }
+        }
+    }
+    
+    // Explicit helper for starting services via ctl.start
+    private fun startService(serviceName: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                Runtime.getRuntime().exec("setprop ${Props.CTL_START} $serviceName")
+            } catch (e: Exception) {
+                Log.e("IntegrityViewModel", "Failed to start service $serviceName", e)
+            }
+        }
+    }
+
+    private fun getPifFileTimestamp(): Long {
+        return try {
+            // Using stat because app might not have direct read permission to /data/PIF.apk
+            // via java.io.File, but shell might access metadata.
+            val process = Runtime.getRuntime().exec("stat -c %Y /data/PIF.apk")
+            val output = process.inputStream.bufferedReader().use { it.readText().trim() }
+            if (output.isNotEmpty() && output.all { char -> char.isDigit() }) {
+                output.toLong()
+            } else {
+                0L
+            }
+        } catch (e: Exception) {
+            0L
         }
     }
 
@@ -265,7 +300,6 @@ class IntegritySpoofViewModel(application: Application) : AndroidViewModel(appli
     // Import / Export / Reset / Save
     // ==========================================
 
-    // NEW: Explicit Save Function
     fun saveGamePropsChanges() {
         viewModelScope.launch(Dispatchers.IO) {
             val currentProfiles = _uiState.value.gameProfiles
@@ -281,10 +315,7 @@ class IntegritySpoofViewModel(application: Application) : AndroidViewModel(appli
     fun exportPresetToDownloads() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                // Determine if we should export the FILE on disk or the current STATE
-                // Typically export exports the current state.
                 val profiles = _uiState.value.gameProfiles
-                // Construct JSON from state
                 val root = JSONObject()
                 profiles.forEach { profile ->
                     val obj = JSONObject()
@@ -329,7 +360,7 @@ class IntegritySpoofViewModel(application: Application) : AndroidViewModel(appli
                     it.copy(
                         gameProfiles = profiles, 
                         resolvedPackages = resolved,
-                        hasUnsavedChanges = false // Import writes immediately, so no pending changes
+                        hasUnsavedChanges = false
                     ) 
                 }
                 notifyGamePropsChanged()
@@ -388,10 +419,58 @@ class IntegritySpoofViewModel(application: Application) : AndroidViewModel(appli
     }
 
     fun triggerPifUpdate() {
+        if (_uiState.value.isPifUpdating) return
+
         viewModelScope.launch {
             _uiState.update { it.copy(isPifUpdating = true) }
-            withContext(Dispatchers.IO) { Thread.sleep(2000) }
+            
+            withContext(Dispatchers.Main) {
+                Toast.makeText(getApplication(), "Checking for PIF updates...", Toast.LENGTH_SHORT).show()
+            }
+
+            // 1. Get initial timestamp
+            val oldTimestamp = withContext(Dispatchers.IO) { getPifFileTimestamp() }
+
+            // 2. Start the service
+            startService(Props.SVC_PIF_UPDATER)
+
+            // 3. Monitor Loop (Max 20 seconds)
+            var success = false
+            var message = "Failed to update: Service timeout"
+            var loops = 0
+            val maxLoops = 20
+
+            withContext(Dispatchers.IO) {
+                // Wait briefly for service to spin up
+                delay(500)
+                
+                while (loops < maxLoops) {
+                    val status = getSystemProp(Props.SVC_STATUS_PREFIX + Props.SVC_PIF_UPDATER)
+                    
+                    if (status == "stopped") {
+                        // Service finished
+                        val newTimestamp = getPifFileTimestamp()
+                        
+                        if (newTimestamp > oldTimestamp) {
+                            message = "PIF Updated Successfully!"
+                        } else {
+                            message = "You are already on the latest version."
+                        }
+                        success = true
+                        break
+                    }
+                    
+                    // If running or restarting, wait and retry
+                    delay(1000)
+                    loops++
+                }
+            }
+            
             _uiState.update { it.copy(isPifUpdating = false) }
+            
+            withContext(Dispatchers.Main) {
+                Toast.makeText(getApplication(), message, Toast.LENGTH_LONG).show()
+            }
         }
     }
 
@@ -491,7 +570,6 @@ class IntegritySpoofViewModel(application: Application) : AndroidViewModel(appli
         updateLocalState(currentList)
     }
 
-    // UPDATED: Updates Memory State Only - Doesn't Write to File
     private fun updateLocalState(profiles: List<GamePropProfile>) {
         viewModelScope.launch(Dispatchers.IO) {
             val resolved = resolvePackageInfo(profiles)
@@ -499,7 +577,7 @@ class IntegritySpoofViewModel(application: Application) : AndroidViewModel(appli
                 it.copy(
                     gameProfiles = profiles, 
                     resolvedPackages = resolved,
-                    hasUnsavedChanges = true // Mark as modified
+                    hasUnsavedChanges = true
                 ) 
             }
         }
