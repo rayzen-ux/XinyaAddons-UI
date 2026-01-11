@@ -40,6 +40,7 @@
     <string name="strategy_thermal_title">Pemutus Termal</string>
     <string name="strategy_thermal_desc">Hentikan pengisian jika terlalu panas.</string>
     <string name="status_active">Aktif</string>
+    <string name="status_enabled">Diaktifkan</string>
     <string name="status_disabled">Nonaktif</string>
     <string name="charging_status">Mengisi Daya</string>
     <string name="discharging_status">Menggunakan Baterai</string>

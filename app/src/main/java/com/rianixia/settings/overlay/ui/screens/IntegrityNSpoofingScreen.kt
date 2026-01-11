@@ -5,7 +5,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -43,7 +42,6 @@ import com.rianixia.settings.overlay.ui.components.*
 import com.rianixia.settings.overlay.ui.viewmodel.GamePropProfile
 import com.rianixia.settings.overlay.ui.viewmodel.InstalledAppInfo
 import com.rianixia.settings.overlay.ui.viewmodel.IntegritySpoofViewModel
-import com.rianixia.settings.overlay.ui.viewmodel.PifUpdateMode
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
 
@@ -120,10 +118,8 @@ fun IntegrityNSpoofingScreen(
                                     Spacer(Modifier.width(16.dp))
                                     Column(Modifier.weight(1f)) {
                                         Text(stringResource(R.string.pif_auto_update), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                                        
-                                        val modeStr = if (state.pifUpdateMode == PifUpdateMode.ON_REBOOT) stringResource(R.string.pif_mode_reboot) else stringResource(R.string.pif_mode_periodic)
                                         Text(
-                                            if (state.isPifAutoUpdate) stringResource(R.string.pif_active_fmt, modeStr) else stringResource(R.string.status_disabled),
+                                            if (state.isPifAutoUpdate) stringResource(R.string.status_enabled) else stringResource(R.string.status_disabled),
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -133,19 +129,10 @@ fun IntegrityNSpoofingScreen(
                                         onCheckedChange = { viewModel.togglePifAutoUpdate(it) }
                                     )
                                 }
-
-                                AnimatedVisibility(visible = state.isPifAutoUpdate) {
-                                    Column(Modifier.padding(start = 40.dp, top = 8.dp, bottom = 8.dp)) {
-                                        UpdateModeSelector(
-                                            currentMode = state.pifUpdateMode,
-                                            onModeSelect = { viewModel.setPifUpdateMode(it) }
-                                        )
-                                    }
-                                }
                                 
                                 Spacer(Modifier.height(16.dp))
                                 
-                                // Manual Action
+                                // Manual Action (Flick Prop)
                                 Button(
                                     onClick = { viewModel.triggerPifUpdate() },
                                     enabled = !state.isPifUpdating,
@@ -684,7 +671,6 @@ private fun TechSpecField(
     }
 }
 
-// Re-using previous helpers (SectionHeader, UpdateModeSelector, etc.)
 @Composable
 private fun SectionHeader(icon: ImageVector, title: String, modifier: Modifier = Modifier) {
     Row(
@@ -703,40 +689,11 @@ private fun SectionHeader(icon: ImageVector, title: String, modifier: Modifier =
 }
 
 @Composable
-private fun UpdateModeSelector(currentMode: PifUpdateMode, onModeSelect: (PifUpdateMode) -> Unit) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        PifUpdateMode.values().forEach { mode ->
-            val selected = mode == currentMode
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(
-                        if (selected) MaterialTheme.colorScheme.secondaryContainer 
-                        else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                    )
-                    .clickable { onModeSelect(mode) }
-                    .padding(8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = if (mode == PifUpdateMode.ON_REBOOT) stringResource(R.string.pif_mode_reboot) else stringResource(R.string.pif_mode_periodic),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (selected) MaterialTheme.colorScheme.onSecondaryContainer 
-                            else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}
-
-@Composable
 private fun GlassTextField(
     label: String,
     value: String,
     onValueChange: (String) -> Unit
 ) {
-    // Legacy helper kept for potential reuse in other cards, but RedesignedGameProfileCard uses TechSpecField
     val focusManager = LocalFocusManager.current
     Column(Modifier.padding(vertical = 4.dp)) {
         Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp)

@@ -48,7 +48,6 @@ data class InstalledAppInfo(
 data class IntegritySpoofState(
     val isPifEnabled: Boolean = false,
     val isPifAutoUpdate: Boolean = false,
-    val pifUpdateMode: PifUpdateMode = PifUpdateMode.ON_REBOOT,
     val isPifUpdating: Boolean = false,
     
     val isPhotosEnabled: Boolean = false,
@@ -67,11 +66,6 @@ data class IntegritySpoofState(
     val isAppsLoading: Boolean = true
 )
 
-enum class PifUpdateMode {
-    ON_REBOOT,
-    PERIODIC
-}
-
 class IntegritySpoofViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _uiState = MutableStateFlow(IntegritySpoofState())
@@ -80,25 +74,18 @@ class IntegritySpoofViewModel(application: Application) : AndroidViewModel(appli
     private val gamePropsFile = File(application.filesDir, "gameprops.json")
     
     // Manual Modifications Required:
-    // 1. Ensure an init service named 'pif-updater_auto' is defined in your init.rc (e.g., /vendor/etc/init/hw/init.rc or similar).
-    // 2. The 'pif-updater_auto' service must execute the binary that updates /data/PIF.apk.
-    // 3. Ensure the service has the correct sepolicy to write to /data/PIF.apk.
+    // 1. Ensure the system property `persist.sys.rianixia.pif-auto` is monitored by your init scripts (e.g. `on property:persist.sys.rianixia.pif-auto=*`).
+    // 2. The update script should write/update `/data/PIF.apk`.
 
     // System Properties Constants
     private object Props {
         const val PIF_ENABLE = "persist.sys.rianixia.pif.enable"
         const val PIF_AUTO_UPDATE = "persist.sys.rianixia.pif-auto"
-        const val PIF_AUTO_INTERVAL = "persist.sys.rianixia.pif-auto.interval"
         
         const val PHOTOS_ENABLE = "persist.sys.rianixia.photos.unlimited"
         const val NETFLIX_ENABLE = "persist.sys.rianixia.netflix.unlock"
         const val GAME_ENABLE = "persist.sys.rianixia.game.props"
         const val GAME_CHANGED = "persist.sys.rianixia.game.changed"
-        
-        // Service Control
-        const val CTL_START = "ctl.start"
-        const val SVC_PIF_UPDATER = "pif-updater_auto"
-        const val SVC_STATUS_PREFIX = "init.svc."
     }
 
     init {
@@ -112,25 +99,16 @@ class IntegritySpoofViewModel(application: Application) : AndroidViewModel(appli
                 mapOf(
                     "pif" to getSystemProp(Props.PIF_ENABLE),
                     "auto" to getSystemProp(Props.PIF_AUTO_UPDATE),
-                    "interval" to getSystemProp(Props.PIF_AUTO_INTERVAL),
                     "photos" to getSystemProp(Props.PHOTOS_ENABLE),
                     "netflix" to getSystemProp(Props.NETFLIX_ENABLE),
                     "game" to getSystemProp(Props.GAME_ENABLE)
                 )
             }
 
-            val intervalVal = sysProps["interval"] ?: "reboot"
-            val mode = if (intervalVal.contains("periodic", ignoreCase = true)) {
-                PifUpdateMode.PERIODIC
-            } else {
-                PifUpdateMode.ON_REBOOT
-            }
-
             _uiState.update {
                 it.copy(
                     isPifEnabled = sysProps["pif"] == "1" || sysProps["pif"] == "true",
                     isPifAutoUpdate = sysProps["auto"] == "true" || sysProps["auto"] == "1",
-                    pifUpdateMode = mode,
                     isPhotosEnabled = sysProps["photos"] == "1" || sysProps["photos"] == "true",
                     isNetflixEnabled = sysProps["netflix"] == "1" || sysProps["netflix"] == "true",
                     isGamePropsEnabled = sysProps["game"] == "1" || sysProps["game"] == "true",
@@ -180,31 +158,24 @@ class IntegritySpoofViewModel(application: Application) : AndroidViewModel(appli
             }
         }
     }
-    
-    // Explicit helper for starting services via ctl.start
-    private fun startService(serviceName: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                Runtime.getRuntime().exec("setprop ${Props.CTL_START} $serviceName")
-            } catch (e: Exception) {
-                Log.e("IntegrityViewModel", "Failed to start service $serviceName", e)
-            }
-        }
-    }
 
-    private fun getPifFileTimestamp(): Long {
+    private fun getPifFileDate(format: String = "MM/dd/yyyy"): String? {
         return try {
             // Using stat because app might not have direct read permission to /data/PIF.apk
-            // via java.io.File, but shell might access metadata.
+            // via java.io.File. We grab the modification time (Epoch) and format it.
             val process = Runtime.getRuntime().exec("stat -c %Y /data/PIF.apk")
             val output = process.inputStream.bufferedReader().use { it.readText().trim() }
+            
             if (output.isNotEmpty() && output.all { char -> char.isDigit() }) {
-                output.toLong()
+                val epochSeconds = output.toLong()
+                val date = Date(epochSeconds * 1000L)
+                val sdf = SimpleDateFormat(format, Locale.US)
+                sdf.format(date)
             } else {
-                0L
+                null
             }
         } catch (e: Exception) {
-            0L
+            null
         }
     }
 
@@ -412,12 +383,6 @@ class IntegritySpoofViewModel(application: Application) : AndroidViewModel(appli
         setSystemProp(Props.PIF_AUTO_UPDATE, if(enabled) "true" else "false")
     }
 
-    fun setPifUpdateMode(mode: PifUpdateMode) {
-        _uiState.update { it.copy(pifUpdateMode = mode) }
-        val value = if (mode == PifUpdateMode.ON_REBOOT) "reboot" else "periodic"
-        setSystemProp(Props.PIF_AUTO_INTERVAL, value)
-    }
-
     fun triggerPifUpdate() {
         if (_uiState.value.isPifUpdating) return
 
@@ -428,39 +393,54 @@ class IntegritySpoofViewModel(application: Application) : AndroidViewModel(appli
                 Toast.makeText(getApplication(), "Checking for PIF updates...", Toast.LENGTH_SHORT).show()
             }
 
-            // 1. Get initial timestamp
-            val oldTimestamp = withContext(Dispatchers.IO) { getPifFileTimestamp() }
+            // 1. Get initial date string from /data/PIF.apk
+            val oldDate = withContext(Dispatchers.IO) { getPifFileDate() }
 
-            // 2. Start the service
-            startService(Props.SVC_PIF_UPDATER)
+            // 2. Flick the property
+            // "if it was false it will be true and then false again"
+            // "if it was true it will be false and true again"
+            withContext(Dispatchers.IO) {
+                val currentState = getSystemProp(Props.PIF_AUTO_UPDATE)
+                val isTrue = currentState == "true" || currentState == "1"
 
-            // 3. Monitor Loop (Max 20 seconds)
+                if (isTrue) {
+                    // True -> False -> True
+                    setSystemProp(Props.PIF_AUTO_UPDATE, "false")
+                    delay(1000) // Wait for system reaction
+                    setSystemProp(Props.PIF_AUTO_UPDATE, "true")
+                } else {
+                    // False -> True -> False
+                    setSystemProp(Props.PIF_AUTO_UPDATE, "true")
+                    delay(1000) // Wait for system reaction
+                    setSystemProp(Props.PIF_AUTO_UPDATE, "false")
+                }
+            }
+
+            // 3. Monitor Loop (Max 20 seconds) to see if /data/PIF.apk date changes
             var success = false
-            var message = "Failed to update: Service timeout"
+            var message = "You are already on the latest version."
             var loops = 0
             val maxLoops = 20
 
             withContext(Dispatchers.IO) {
-                // Wait briefly for service to spin up
-                delay(500)
+                // Wait briefly for service/script to write file
+                delay(1000)
                 
                 while (loops < maxLoops) {
-                    val status = getSystemProp(Props.SVC_STATUS_PREFIX + Props.SVC_PIF_UPDATER)
+                    val newDate = getPifFileDate()
                     
-                    if (status == "stopped") {
-                        // Service finished
-                        val newTimestamp = getPifFileTimestamp()
-                        
-                        if (newTimestamp > oldTimestamp) {
-                            message = "PIF Updated Successfully!"
-                        } else {
-                            message = "You are already on the latest version."
-                        }
+                    // Check if date string changed (and both are not null)
+                    if (oldDate != null && newDate != null && oldDate != newDate) {
+                        message = "Updated PIF from $oldDate to $newDate"
+                        success = true
+                        break
+                    } else if (oldDate == null && newDate != null) {
+                        // File didn't exist, now it does
+                        message = "Installed PIF ($newDate)"
                         success = true
                         break
                     }
                     
-                    // If running or restarting, wait and retry
                     delay(1000)
                     loops++
                 }
