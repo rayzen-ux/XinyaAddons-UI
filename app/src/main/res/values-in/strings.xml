@@ -353,4 +353,31 @@
     <string name="dialog_report_desc_2">Jika Anda yakin nilai ini salah (angka palsu atau tidak masuk akal), Anda dapat melaporkannya ke pengembang.</string>
     <string name="dialog_report_desc_3">Penting: Saat melapor, harap cantumkan Model Perangkat, versi ROM, dan alasan mengapa menurut Anda jalur tersebut tidak valid.</string>
     <string name="btn_report_issue">Laporkan Masalah</string>
+    <string name="setup_welcome_title">Selamat Datang di Xinya</string>
+    <string name="setup_welcome_desc">Toolkit utama Anda untuk kustomisasi sistem dan penyetelan performa</string>
+    <string name="setup_dashboard_title">Dasbor &amp; Performa</string>
+    <string name="setup_dashboard_desc">Pantau statistik sistem waktu nyata dan atur profil CPU, GPU, dan Termal untuk menyeimbangkan daya dan kecepatan</string>
+    <string name="setup_system_title">Sistem &amp; IO</string>
+    <string name="setup_system_desc">Selami konfigurasi sistem, Penjadwal IO, dan manipulasi pengaturan aman</string>
+    <string name="setup_preferences_title">Preferensi</string>
+    <string name="setup_preferences_desc">Konfigurasikan bagaimana Xinya berperilaku di perangkat Anda</string>
+    
+    <string name="setup_hero_title">Xinya Toolkit</string>
+    <string name="setup_pill_performance">Performa</string>
+    <string name="setup_pill_control">Kontrol</string>
+    <string name="cd_welcome_image">Gambar Sambutan</string>
+    
+    <string name="setup_pref_launcher_title">Tampilkan di Laci Aplikasi</string>
+    <string name="setup_pref_launcher_desc">Buat Xinya Toolkit terlihat di peluncur Anda</string>
+    <string name="setup_pref_safety_title">Mode Aman</string>
+    <string name="setup_pref_safety_desc">Reset otomatis tweak saat reboot untuk stabilitas</string>
+    
+    <string name="setup_dialog_safety_title">Matikan Mode Aman?</string>
+    <string name="setup_dialog_safety_risk_info">Mematikan Mode Aman akan mempertahankan pengaturan kritis (Penjadwal IO, Frekuensi CPU, Offset Undervolt) setelah reboot.</string>
+    <string name="setup_dialog_safety_warning">PERINGATAN: Konfigurasi yang salah dapat menyebabkan bootloop permanen. Lanjutkan dengan hati-hati.</string>
+    <string name="setup_dialog_safety_confirm">Matikan saja</string>
+    <string name="setup_dialog_safety_cancel">Batal</string>
+    
+    <string name="setup_btn_get_started">Mulai</string>
+    <string name="setup_btn_next">Lanjut</string>
 </resources>

@@ -354,5 +354,31 @@
     <string name="dialog_report_desc_2">If you believe this value is incorrect (false number or unreasonable), you can report it to the developer.</string>
     <string name="dialog_report_desc_3">Important: When reporting, please state your Device Model, ROM version, and why you think the path is invalid.</string>
     <string name="btn_report_issue">Report Issue</string>
-
+    <string name="setup_welcome_title">Welcome to Xinya</string>
+    <string name="setup_welcome_desc">Your ultimate toolkit for system customization and performance tuning</string>
+    <string name="setup_dashboard_title">Dashboard &amp; Performance</string>
+    <string name="setup_dashboard_desc">Monitor real-time system stats and tweak CPU, GPU, and Thermal profiles to balance power and speed</string>
+    <string name="setup_system_title">System &amp; IO</string>
+    <string name="setup_system_desc">Deep dive into system configurations, IO Schedulers, and secure settings manipulation</string>
+    <string name="setup_preferences_title">Preferences</string>
+    <string name="setup_preferences_desc">Configure how Xinya behaves on your device</string>
+    
+    <string name="setup_hero_title">Xinya Toolkit</string>
+    <string name="setup_pill_performance">Performance</string>
+    <string name="setup_pill_control">Control</string>
+    <string name="cd_welcome_image">Welcome Image</string>
+    
+    <string name="setup_pref_launcher_title">Show in App Drawer</string>
+    <string name="setup_pref_launcher_desc">Make Xinya Toolkit visible in your launcher</string>
+    <string name="setup_pref_safety_title">Safety Mode</string>
+    <string name="setup_pref_safety_desc">Auto-reset tweaks on reboot for stability</string>
+    
+    <string name="setup_dialog_safety_title">Disable Safety Mode?</string>
+    <string name="setup_dialog_safety_risk_info">Disabling Safety Mode persists critical settings (IO Schedulers, CPU Frequencies, Undervolt Offsets) across reboots.</string>
+    <string name="setup_dialog_safety_warning">WARNING: Incorrect configurations may cause unrecoverable bootloops. Proceed with caution.</string>
+    <string name="setup_dialog_safety_confirm">Disable Anyway</string>
+    <string name="setup_dialog_safety_cancel">Cancel</string>
+    
+    <string name="setup_btn_get_started">Get Started</string>
+    <string name="setup_btn_next">Next</string>
 </resources>

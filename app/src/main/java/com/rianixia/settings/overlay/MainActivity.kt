@@ -32,6 +32,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.rianixia.settings.overlay.data.AppPreferences
 import com.rianixia.settings.overlay.ui.components.*
 import com.rianixia.settings.overlay.ui.screens.*
 import com.rianixia.settings.overlay.ui.theme.*
@@ -51,6 +52,10 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 val context = LocalContext.current
                 
+                // Determine Start Destination based on First Run
+                val isFirstRun = remember { AppPreferences.isFirstRun(context) }
+                val startDestination = if (isFirstRun) "setup_wizard" else "root_pager"
+                
                 // Separate haze states - app bar manages its own blur internally
                 val appBarHazeState = remember { HazeState() }
                 val navBarHazeState = remember { HazeState() }
@@ -60,26 +65,25 @@ class MainActivity : ComponentActivity() {
 
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
+                
+                // Main root pager identification
                 val isRoot = currentDestination?.route == "root_pager"
+                // Hide bars during setup wizard
+                val isSetup = currentDestination?.route == "setup_wizard"
 
                 // Overflow Menu State
                 var showMenu by remember { mutableStateOf(false) }
 
                 // --- Navigation Bar Positioning Logic ---
-                // We use WindowInsets to determine if the user is using 3-button nav or gestures.
-                // 3-Button Nav typically has a large bottom inset (> 30dp).
-                // Gesture Nav typically has a small handle or 0 inset (~16-24dp).
                 val navBarInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-                
-                // If inset is large (Buttons), raise the navbar by adding the inset.
-                // If inset is small (Gestures), keep the default 24.dp position.
                 val bottomNavPadding = if (navBarInset > 30.dp) 24.dp + navBarInset else 24.dp
                 // ----------------------------------------
 
                 BackHandler {
                     if (isRoot) {
                         (context as? Activity)?.finish()
-                    } else {
+                    } else if (!isSetup) {
+                        // Allow back nav unless we are in setup wizard
                         navController.popBackStack()
                     }
                 }
@@ -88,17 +92,17 @@ class MainActivity : ComponentActivity() {
                     Scaffold(
                         containerColor = Color.Transparent
                     ) { innerPadding ->
-                        // Content Box: Removed .padding(innerPadding) to fix black/white status bar issues
+                        // Content Box
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .background(MaterialTheme.colorScheme.background)
-                                // Only apply navbar haze source
-                                .hazeSource(state = navBarHazeState)
+                                // Only apply navbar haze source if we are not in setup wizard to avoid weird blurring on plain bg
+                                .let { if (!isSetup) it.hazeSource(state = navBarHazeState) else it }
                         ) {
                             NavHost(
                                 navController = navController,
-                                startDestination = "root_pager",
+                                startDestination = startDestination,
                                 modifier = Modifier.fillMaxSize(),
                                 enterTransition = { 
                                     slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(300)) + fadeIn(tween(300))
@@ -113,6 +117,11 @@ class MainActivity : ComponentActivity() {
                                     slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(300)) + fadeOut(tween(300))
                                 }
                             ) {
+                                // NEW: Setup Wizard Route
+                                composable("setup_wizard") {
+                                    SetupWizardScreen(navController)
+                                }
+
                                 composable(
                                     route = "root_pager",
                                     enterTransition = { fadeIn(tween(300)) },
@@ -141,7 +150,6 @@ class MainActivity : ComponentActivity() {
                                 composable("game_boost") { AZenithScreen(navController) }
                                 composable("integrity_spoofing") { IntegrityNSpoofingScreen(navController) }
                                 
-                                // NEW: About and Settings
                                 composable("about") { AboutScreen(navController) }
                                 composable("settings") { SettingsScreen(navController) }
                             }
@@ -172,7 +180,6 @@ class MainActivity : ComponentActivity() {
                                         }
                                     }
 
-                                    // Dropdown Menu using material components styled to match glass look
                                     DropdownMenu(
                                         expanded = showMenu,
                                         onDismissRequest = { showMenu = false },
@@ -204,7 +211,7 @@ class MainActivity : ComponentActivity() {
                             }
                         )
 
-                        // Bottom Navigation with Dynamic Padding
+                        // Bottom Navigation
                         SlidingPillNavBar(
                             pagerState = pagerState,
                             items = listOf(
@@ -220,7 +227,7 @@ class MainActivity : ComponentActivity() {
                             hazeState = navBarHazeState,
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
-                                .padding(bottom = bottomNavPadding) // Applied dynamic padding here
+                                .padding(bottom = bottomNavPadding)
                         )
                     }
                 }

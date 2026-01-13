@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AppShortcut
 import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.Security
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -57,12 +58,24 @@ fun SettingsScreen(
                     item {
                          PreferenceSectionHeader(title = stringResource(R.string.pref_category_general))
                          MaterialGlassCard {
+                             // Launcher Icon Toggle
                              SettingsToggle(
                                  title = stringResource(R.string.pref_launcher_icon_title),
                                  desc = stringResource(R.string.pref_launcher_icon_desc),
                                  icon = Icons.Rounded.AppShortcut,
                                  checked = state.isLauncherIconEnabled,
                                  onCheckedChange = { viewModel.toggleLauncherIcon(it) }
+                             )
+
+                             MaterialDivider()
+
+                             // Safety Mode Toggle
+                             SettingsToggle(
+                                 title = "Safety Mode", // Use resource string in production: stringResource(R.string.pref_safety_mode_title)
+                                 desc = "Reset dangerous settings on reboot", // Use resource string in production: stringResource(R.string.pref_safety_mode_desc)
+                                 icon = Icons.Rounded.Security,
+                                 checked = state.isSafetyModeEnabled,
+                                 onCheckedChange = { viewModel.toggleSafetyMode(it) }
                              )
                          }
                     }
@@ -99,7 +112,7 @@ fun SettingsScreen(
                 onBackClick = { navController.popBackStack() },
                 hazeState = hazeState,
                 modifier = Modifier.align(Alignment.TopCenter),
-                addStatusBarPadding = false
+                addStatusBarPadding = true
             )
         }
     }
@@ -133,7 +146,6 @@ private fun SettingsToggle(
         Spacer(Modifier.width(16.dp))
         
         Column(modifier = Modifier.weight(1f)) {
-            // Fix: Explicitly set color to onSurface to prevent black text on dark background
             Text(
                 text = title, 
                 style = MaterialTheme.typography.titleMedium, 
@@ -147,7 +159,6 @@ private fun SettingsToggle(
             checked = checked, 
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
-                // Ensure high visibility in dark mode/glass
                 checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
                 checkedTrackColor = MaterialTheme.colorScheme.primary,
                 uncheckedThumbColor = MaterialTheme.colorScheme.outline,
