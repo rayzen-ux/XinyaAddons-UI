@@ -106,6 +106,7 @@ fun IntegrityNSpoofingScreen(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
+                                        .clickable { viewModel.togglePifAutoUpdate(!state.isPifAutoUpdate) }
                                         .padding(vertical = 8.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
@@ -118,8 +119,9 @@ fun IntegrityNSpoofingScreen(
                                     Spacer(Modifier.width(16.dp))
                                     Column(Modifier.weight(1f)) {
                                         Text(stringResource(R.string.pif_auto_update), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                                        
                                         Text(
-                                            if (state.isPifAutoUpdate) stringResource(R.string.status_enabled) else stringResource(R.string.status_disabled),
+                                            if (state.isPifAutoUpdate) stringResource(R.string.status_active) else stringResource(R.string.status_disabled),
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -132,7 +134,7 @@ fun IntegrityNSpoofingScreen(
                                 
                                 Spacer(Modifier.height(16.dp))
                                 
-                                // Manual Action (Flick Prop)
+                                // Manual Action
                                 Button(
                                     onClick = { viewModel.triggerPifUpdate() },
                                     enabled = !state.isPifUpdating,
@@ -319,6 +321,7 @@ private fun GamePropsControlPanel(
             Row(
                 Modifier
                     .fillMaxWidth()
+                    .clickable { onToggle(!enabled) }
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -694,6 +697,7 @@ private fun GlassTextField(
     value: String,
     onValueChange: (String) -> Unit
 ) {
+    // Legacy helper kept for potential reuse in other cards, but RedesignedGameProfileCard uses TechSpecField
     val focusManager = LocalFocusManager.current
     Column(Modifier.padding(vertical = 4.dp)) {
         Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp)

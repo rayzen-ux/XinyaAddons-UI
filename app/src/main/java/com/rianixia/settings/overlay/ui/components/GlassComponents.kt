@@ -524,13 +524,19 @@ fun XinyaSlider(value: Float, onValueChange: (Float) -> Unit, valueRange: Closed
 }
 
 @Composable
-fun BoostItem(app: String, active: Boolean) {
+fun BoostItem(app: String, active: Boolean, onCheckedChange: (Boolean) -> Unit = {}) {
     val colorScheme = MaterialTheme.colorScheme
-    Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clickable { onCheckedChange(!active) }
+            .padding(vertical = 8.dp), 
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         Box(Modifier.size(32.dp).clip(CircleShape).background(colorScheme.surfaceVariant))
         Spacer(Modifier.width(12.dp))
         Text(app, Modifier.weight(1f), color = colorScheme.onSurface)
-        Switch(checked = active, onCheckedChange = {})
+        Switch(checked = active, onCheckedChange = onCheckedChange)
     }
 }
 
