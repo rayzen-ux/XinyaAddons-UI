@@ -295,7 +295,7 @@ fun BatteryCenterScreen(
                 onBackClick = { navController.popBackStack() },
                 hazeState = hazeState,
                 modifier = Modifier.align(Alignment.TopCenter),
-                addStatusBarPadding = false,
+                addStatusBarPadding = true,
                 actions = {
                     Surface(
                         onClick = { showGuideDialog = true },

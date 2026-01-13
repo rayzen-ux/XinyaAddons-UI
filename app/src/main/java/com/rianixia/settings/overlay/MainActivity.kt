@@ -3,6 +3,7 @@ package com.rianixia.settings.overlay
 import android.app.Activity
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.animation.*
@@ -42,6 +43,9 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalFoundationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Enable Edge-to-Edge to allow drawing behind status/nav bars
+        enableEdgeToEdge()
+        
         setContent {
             XinyaTheme {
                 val navController = rememberNavController()
@@ -61,6 +65,17 @@ class MainActivity : ComponentActivity() {
                 // Overflow Menu State
                 var showMenu by remember { mutableStateOf(false) }
 
+                // --- Navigation Bar Positioning Logic ---
+                // We use WindowInsets to determine if the user is using 3-button nav or gestures.
+                // 3-Button Nav typically has a large bottom inset (> 30dp).
+                // Gesture Nav typically has a small handle or 0 inset (~16-24dp).
+                val navBarInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                
+                // If inset is large (Buttons), raise the navbar by adding the inset.
+                // If inset is small (Gestures), keep the default 24.dp position.
+                val bottomNavPadding = if (navBarInset > 30.dp) 24.dp + navBarInset else 24.dp
+                // ----------------------------------------
+
                 BackHandler {
                     if (isRoot) {
                         (context as? Activity)?.finish()
@@ -73,9 +88,9 @@ class MainActivity : ComponentActivity() {
                     Scaffold(
                         containerColor = Color.Transparent
                     ) { innerPadding ->
+                        // Content Box: Removed .padding(innerPadding) to fix black/white status bar issues
                         Box(
                             modifier = Modifier
-                                .padding(innerPadding)
                                 .fillMaxSize()
                                 .background(MaterialTheme.colorScheme.background)
                                 // Only apply navbar haze source
@@ -189,7 +204,7 @@ class MainActivity : ComponentActivity() {
                             }
                         )
 
-                        // Bottom Navigation
+                        // Bottom Navigation with Dynamic Padding
                         SlidingPillNavBar(
                             pagerState = pagerState,
                             items = listOf(
@@ -205,7 +220,7 @@ class MainActivity : ComponentActivity() {
                             hazeState = navBarHazeState,
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
-                                .padding(bottom = 24.dp)
+                                .padding(bottom = bottomNavPadding) // Applied dynamic padding here
                         )
                     }
                 }

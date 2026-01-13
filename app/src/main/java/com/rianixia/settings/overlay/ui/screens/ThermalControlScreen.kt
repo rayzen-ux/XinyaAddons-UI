@@ -255,7 +255,7 @@ fun ThermalControlScreen(
                 onBackClick = { navController.popBackStack() },
                 hazeState = hazeState,
                 modifier = Modifier.align(Alignment.TopCenter),
-                addStatusBarPadding = false,
+                addStatusBarPadding = true,
                 actions = {
                     Surface(
                         onClick = { showInfoDialog = true },

@@ -444,7 +444,7 @@ fun UndervoltScreen(navController: NavController) {
                 onBackClick = { navController.popBackStack() },
                 hazeState = hazeState,
                 modifier = Modifier.align(Alignment.TopCenter),
-                addStatusBarPadding = false,
+                addStatusBarPadding = true,
                 actions = {
                     // Only show info if supported and loaded
                     if(isSupported && isLoaded) {

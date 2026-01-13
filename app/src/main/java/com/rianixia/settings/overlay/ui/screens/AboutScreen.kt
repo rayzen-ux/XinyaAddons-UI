@@ -240,7 +240,7 @@ fun AboutScreen(
                 onBackClick = { navController.popBackStack() },
                 hazeState = hazeState,
                 modifier = Modifier.align(Alignment.TopCenter),
-                addStatusBarPadding = false
+                addStatusBarPadding = true
             )
         }
     }
