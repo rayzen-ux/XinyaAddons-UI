@@ -39,11 +39,20 @@ import com.rianixia.settings.overlay.ui.theme.*
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
 import kotlinx.coroutines.launch
+import java.io.BufferedReader
+import java.io.InputStreamReader
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalFoundationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // ROM Verification Check
+        // If ro.build.version.oplusrom.display does not contain "xia", crash immediately.
+        if (!checkRomEnvironment()) {
+            throw RuntimeException()
+        }
+
         // Enable Edge-to-Edge to allow drawing behind status/nav bars
         enableEdgeToEdge()
         
@@ -232,6 +241,21 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Checks for the required ROM property.
+     * Returns true if prop contains "xia", false otherwise.
+     */
+    private fun checkRomEnvironment(): Boolean {
+        return try {
+            val process = Runtime.getRuntime().exec("getprop ro.build.version.oplusrom.display")
+            val reader = BufferedReader(InputStreamReader(process.inputStream))
+            val line = reader.readLine() ?: ""
+            line.contains("xia")
+        } catch (e: Exception) {
+            false
         }
     }
 }
