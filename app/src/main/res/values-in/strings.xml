@@ -30,8 +30,8 @@
     <string name="pwr_cell">Baterai</string>
     <string name="therm_sens">Suhu</string>
     <string name="quick_protocols">Profil Cepat</string>
-    <string name="protocol_gaming">Gaming</string>
-    <string name="protocol_efficiency">Efisiensi</string>
+    <string name="protocol_gaming">AZenith</string>
+    <string name="protocol_efficiency">Undervolt</string>
 
     <string name="power_matrix">Pusat Baterai</string>
     <string name="power_strategy">Strategi Pengisian</string>
@@ -380,4 +380,7 @@
     
     <string name="setup_btn_get_started">Mulai</string>
     <string name="setup_btn_next">Lanjut</string>
+
+    <string name="az_notif_active_title">Performance Profile Active</string>
+    <string name="az_notif_active_desc">Optimizing %1$s</string>
 </resources>

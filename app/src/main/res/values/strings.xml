@@ -30,8 +30,8 @@
     <string name="pwr_cell">Battery</string>
     <string name="therm_sens">Thermals</string>
     <string name="quick_protocols">Quick Profiles</string>
-    <string name="protocol_gaming">Gaming</string>
-    <string name="protocol_efficiency">Efficiency</string>
+    <string name="protocol_gaming">AZenith</string>
+    <string name="protocol_efficiency">Undervolt</string>
 
     <string name="power_matrix">Battery Center</string>
     <string name="power_strategy">Charging Strategy</string>
@@ -381,4 +381,7 @@
     
     <string name="setup_btn_get_started">Get Started</string>
     <string name="setup_btn_next">Next</string>
+
+    <string name="az_notif_active_title">Performance Profile Active</string>
+    <string name="az_notif_active_desc">Optimizing %1$s</string>
 </resources>

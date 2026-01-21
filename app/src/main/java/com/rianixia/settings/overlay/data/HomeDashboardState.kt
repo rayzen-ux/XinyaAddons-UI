@@ -21,7 +21,9 @@ data class HomeDashboardState(
     val uptime: String = "00:00:00",
     val deepSleep: String = "0% · 0h 0m",
     val enforceDozeConfig: EnforceDozeConfig = EnforceDozeConfig(),
-    val isUndervoltSupported: Boolean = false
+    val isUndervoltSupported: Boolean = false,
+    val isUndervoltActive: Boolean = false,
+    val isAZenithActive: Boolean = false // [NEW] Tracks if AZenith (Gaming Mode) is enabled
 )
 
 data class ChargingConfig(

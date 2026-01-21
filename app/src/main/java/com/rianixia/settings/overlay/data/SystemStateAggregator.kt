@@ -6,16 +6,13 @@ import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.Build
 import android.os.SystemClock
-import android.util.Log
 import com.rianixia.settings.overlay.services.EnforceDozeService
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import java.io.BufferedReader
 import java.io.File
-import java.io.InputStreamReader
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 
@@ -39,6 +36,8 @@ class SystemStateAggregator(private val context: Context) {
             deviceRepo.initialize()
             updateDeviceInfo()
             updateChargingConfig()
+            updateUndervoltState()
+            updateAZenithState()
         }
 
         // Fast Poll: CPU & Time (500ms)
@@ -50,12 +49,14 @@ class SystemStateAggregator(private val context: Context) {
             }
         }
 
-        // Medium Poll: Battery, Thermal & Config (2s)
+        // Medium Poll: Battery, Thermal, Configs & Feature States (2s)
         scope.launch {
             while (isActive) {
                 updateBatteryState()
                 updateThermalState()
                 updateChargingConfig()
+                updateUndervoltState()
+                updateAZenithState() 
                 delay(2000)
             }
         }
@@ -128,8 +129,8 @@ class SystemStateAggregator(private val context: Context) {
         val hardware = Build.HARDWARE
         val manufacturer = Build.MANUFACTURER.replaceFirstChar { it.uppercase() }
 
-        val propName = getSystemProperty("ro.vendor.oplus.market.name")
-            .ifEmpty { getSystemProperty("ro.vendor.oplus.market.ename") }
+        val propName = SystemProps.get("ro.vendor.oplus.market.name")
+            .ifEmpty { SystemProps.get("ro.vendor.oplus.market.ename") }
         
         val marketName = if (propName.isNotEmpty()) {
             propName.replace("[", "").replace("]", "")
@@ -137,11 +138,11 @@ class SystemStateAggregator(private val context: Context) {
             deviceRepo.getMarketName(rawModel)
         }
         
-        val socModel = getSystemProperty("ro.soc.model")
-        val vendorSocModel = getSystemProperty("ro.vendor.soc.model")
-        val socExtName = getSystemProperty("ro.vendor.soc.model.external_name")
-        val socPartName = getSystemProperty("ro.vendor.soc.model.part_name")
-        val socManuf = getSystemProperty("ro.soc.manufacturer")
+        val socModel = SystemProps.get("ro.soc.model")
+        val vendorSocModel = SystemProps.get("ro.vendor.soc.model")
+        val socExtName = SystemProps.get("ro.vendor.soc.model.external_name")
+        val socPartName = SystemProps.get("ro.vendor.soc.model.part_name")
+        val socManuf = SystemProps.get("ro.soc.manufacturer")
 
         val socEntry = deviceRepo.identifySoc(socModel, vendorSocModel, socExtName, socPartName, board, hardware)
 
@@ -167,14 +168,13 @@ class SystemStateAggregator(private val context: Context) {
     }
 
     private fun updateChargingConfig() {
-        val autoCutState = getSystemProperty("persist.sys.rianixia.autocut.state") == "1"
-        val autoCutVal = getSystemProperty("persist.sys.rianixia.autocut.percent").toIntOrNull() ?: 85
-        val bypassState = getSystemProperty("persist.sys.rianixia.bypass_charge.state") == "1"
-        val bypassVal = getSystemProperty("persist.sys.rianixia.bypass_charge.threshold").toIntOrNull() ?: 20
-        val tempState = getSystemProperty("persist.sys.rianixia.thermal_charge_cut-off.state") == "1"
+        val autoCutState = SystemProps.get("persist.sys.rianixia.autocut.state") == "1"
+        val autoCutVal = SystemProps.get("persist.sys.rianixia.autocut.percent").toIntOrNull() ?: 85
+        val bypassState = SystemProps.get("persist.sys.rianixia.bypass_charge.state") == "1"
+        val bypassVal = SystemProps.get("persist.sys.rianixia.bypass_charge.threshold").toIntOrNull() ?: 20
+        val tempState = SystemProps.get("persist.sys.rianixia.thermal_charge_cut-off.state") == "1"
 
-        // New feature support check
-        val undervoltSupport = getSystemProperty("persist.sys.rianixia.undervolt.support") == "1"
+        val undervoltSupport = SystemProps.get("persist.sys.rianixia.undervolt.support") == "1"
 
         _state.update {
             it.copy(
@@ -188,6 +188,26 @@ class SystemStateAggregator(private val context: Context) {
                 isUndervoltSupported = undervoltSupport
             )
         }
+    }
+    
+    private fun updateUndervoltState() {
+        val clusters = listOf("big", "bl", "little", "cci", "gpu", "gpu-high")
+        var isActive = false
+        
+        for (cluster in clusters) {
+            val value = SystemProps.get("persist.sys.rianixia.undervolt-cluster.$cluster").toIntOrNull() ?: 0
+            if (value < 0) {
+                isActive = true
+                break
+            }
+        }
+        
+        _state.update { it.copy(isUndervoltActive = isActive) }
+    }
+
+    private fun updateAZenithState() {
+        val isGlobalEnabled = SystemProps.get("persist.sys.rianixia.azenith.global") == "1"
+        _state.update { it.copy(isAZenithActive = isGlobalEnabled) }
     }
 
     private fun updateBatteryState() {
@@ -212,17 +232,15 @@ class SystemStateAggregator(private val context: Context) {
             val tempInt = batteryStatus?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0) ?: 0
             val tempC = tempInt / 10f
 
-            // Read specific nodes for health and cycles with Fallback
             var healthPercentVal = readSysFs("/sys/devices/platform/charger/battery_health_percent")
             if (healthPercentVal.isNullOrEmpty()) {
-                val fallback = getSystemProperty("persist.sys.rianixia.battery.health")
-                // Only use fallback if it's not empty, otherwise keep null to eventually show "--"
+                val fallback = SystemProps.get("persist.sys.rianixia.battery.health")
                 healthPercentVal = if (fallback.isNotEmpty()) fallback else null
             }
 
             var cycleCountVal = readSysFs("/sys/devices/platform/charger/tran_battery_cycle")
             if (cycleCountVal.isNullOrEmpty()) {
-                val fallback = getSystemProperty("persist.sys.rianixia.battery.cycles")
+                val fallback = SystemProps.get("persist.sys.rianixia.battery.cycles")
                 cycleCountVal = if (fallback.isNotEmpty()) fallback else null
             }
 
@@ -245,20 +263,47 @@ class SystemStateAggregator(private val context: Context) {
 
     private fun updateThermalState() {
         val batteryTemp = _state.value.batteryInfo.temperature
+        
+        val modeProp = SystemProps.get("persist.sys.rianixia.thermal-mode").lowercase()
+        val profile = when(modeProp) {
+            "adaptive" -> ThermalProfile.ADAPTIVE
+            "disabled" -> ThermalProfile.DISABLED
+            "custom" -> ThermalProfile.CUSTOM
+            else -> ThermalProfile.DEFAULT
+        }
+        
         var summary = "Optimal"
         var color = 0xFF4CAF50 
 
-        when {
-            batteryTemp > 41 -> { summary = "Throttling"; color = 0xFFFF5252 }
-            batteryTemp > 38 -> { summary = "Warm"; color = 0xFFFFC107 }
-            else -> { summary = "Optimal"; color = 0xFF4CAF50 }
+        when (profile) {
+            ThermalProfile.DISABLED -> {
+                summary = "DISABLED"
+                color = 0xFFFF5252
+            }
+            ThermalProfile.CUSTOM -> {
+                val limit = SystemProps.get("persist.sys.rianixia.thermal-custom").toIntOrNull() ?: 45
+                summary = "Custom ($limit°C)"
+                color = 0xFFAB47BC
+            }
+            ThermalProfile.ADAPTIVE -> {
+                 summary = "Adaptive"
+                 color = 0xFFFFB74D
+            }
+            ThermalProfile.DEFAULT -> {
+                when {
+                    batteryTemp > 41 -> { summary = "Throttling"; color = 0xFFFF5252 }
+                    batteryTemp > 38 -> { summary = "Warm"; color = 0xFFFFC107 }
+                    else -> { summary = "Optimal"; color = 0xFF4CAF50 }
+                }
+            }
         }
 
         _state.update {
             it.copy(thermalState = it.thermalState.copy(
                 summary = summary,
                 temperature = batteryTemp,
-                color = color.toLong()
+                color = color.toLong(),
+                activeProfile = profile
             ))
         }
     }
@@ -267,7 +312,7 @@ class SystemStateAggregator(private val context: Context) {
         try {
             var gov = readSysFs("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor")
             if (gov.isNullOrEmpty() || gov == "unknown") {
-                gov = getSystemProperty("persist.sys.rianixia.cpu.gov")
+                gov = SystemProps.get("persist.sys.rianixia.cpu.gov")
             }
             if (gov.isNullOrEmpty()) gov = "unknown"
             
@@ -315,36 +360,23 @@ class SystemStateAggregator(private val context: Context) {
         _state.update { it.copy(uptime = uptimeStr, deepSleep = deepSleepStr) }
     }
 
+    // Pure File I/O for sysfs (Removed shell cat fallback)
     private fun readSysFs(path: String): String? {
         return try {
             File(path).takeIf { it.exists() && it.canRead() }?.readText()?.trim()
-                ?: try {
-                    val proc = Runtime.getRuntime().exec(arrayOf("cat", path))
-                    val result = proc.inputStream.bufferedReader().readText().trim()
-                    if (result.isNotEmpty()) result else null
-                } catch (e: Exception) { null }
         } catch (e: Exception) { null }
     }
 
-    private fun getSystemProperty(key: String): String {
-        return try {
-            val process = Runtime.getRuntime().exec("getprop $key")
-            val reader = BufferedReader(InputStreamReader(process.inputStream))
-            reader.readLine()?.trim() ?: ""
-        } catch (e: Exception) { "" }
-    }
-
+    // Wrappers for external consumers if needed
     fun setSystemProperty(key: String, value: String) {
         scope.launch(Dispatchers.IO) {
-            try {
-                Runtime.getRuntime().exec(arrayOf("setprop", key, value))
-                delay(100) 
-                updateChargingConfig()
-            } catch (e: Exception) { e.printStackTrace() }
+            SystemProps.set(key, value)
+            delay(50) // Short delay for property service propagation
+            updateChargingConfig()
         }
     }
 
     fun onCleared() {
         scope.cancel()
     }
-}                                                                                                                                                           
+}

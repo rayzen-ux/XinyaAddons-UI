@@ -2,9 +2,7 @@ package com.rianixia.settings.overlay.data
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.BufferedReader
 import java.io.File
-import java.io.InputStreamReader
 
 data class CpuCluster(
     val id: Int,
@@ -122,21 +120,12 @@ object CPURepository {
         return cores.sorted()
     }
 
+    // REPLACED: Shell execution with SystemProps reflection
     fun getProp(key: String, default: String): String {
-        return try {
-            val p = Runtime.getRuntime().exec("getprop $key")
-            val reader = BufferedReader(InputStreamReader(p.inputStream))
-            reader.readLine()?.trim()?.takeIf { it.isNotEmpty() } ?: default
-        } catch (e: Exception) {
-            default
-        }
+        return SystemProps.get(key, default)
     }
 
     fun setProp(key: String, value: String) {
-        try {
-            Runtime.getRuntime().exec("setprop $key $value")
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+        SystemProps.set(key, value)
     }
 }

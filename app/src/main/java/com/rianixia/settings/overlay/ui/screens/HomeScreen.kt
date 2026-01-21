@@ -43,6 +43,7 @@ fun HomeScreen(
     val hazeState = remember { HazeState() }
 
     val thermalColorTarget = when {
+        state.thermalState.summary == "DISABLED" -> Color(state.thermalState.color) 
         state.thermalState.temperature > 45f -> MaterialTheme.colorScheme.error
         state.thermalState.temperature >= 38f -> Color(0xFFFF9800)
         else -> Color(state.thermalState.color)
@@ -87,7 +88,7 @@ fun HomeScreen(
                             graphPoints = state.cpuState.graphPoints,
                             peakFreq = state.cpuState.peakFrequency,
                             governor = state.cpuState.activeGovernor,
-                            onClick = { navController.navigate("cpu_control") } // Navigates to the new CPU Screen
+                            onClick = { navController.navigate("cpu_control") } 
                         )
                     }
 
@@ -149,7 +150,8 @@ fun HomeScreen(
                                     icon = Icons.Rounded.RocketLaunch,
                                     modifier = Modifier.weight(1f),
                                     color = MaterialTheme.colorScheme.tertiary,
-                                    onClick = { navController.navigate("azenith") } // Matches AZenith route
+                                    isActive = state.isAZenithActive, // [NEW] Active state check
+                                    onClick = { navController.navigate("azenith") } 
                                 )
                                 
                                 if (state.isUndervoltSupported) {
@@ -158,7 +160,8 @@ fun HomeScreen(
                                         icon = Icons.Rounded.Eco,
                                         modifier = Modifier.weight(1f),
                                         color = MaterialTheme.colorScheme.secondary,
-                                        onClick = { navController.navigate("undervolt") } // Matches Undervolt route
+                                        isActive = state.isUndervoltActive,
+                                        onClick = { navController.navigate("undervolt") } 
                                     )
                                 }
                             }
@@ -166,10 +169,6 @@ fun HomeScreen(
                     }
                 }
             }
-            
-            // Note: HomeScreen typically doesn't have a standard App Bar or Back Button 
-            // as it is the root destination, but we add a glass header for identity if needed.
-            // For now, no AppBar on Home to keep the large IdentityHeader clean.
         }
     }
 }
@@ -429,14 +428,20 @@ fun QuickProtocolCard(
     icon: ImageVector,
     modifier: Modifier,
     color: Color,
+    isActive: Boolean, // [NEW] Active state param
     onClick: () -> Unit
 ) {
+    // [NEW] Visual logic for active state
+    val bgAlpha = if (isActive) 0.3f else 0.15f
+    val borderAlpha = if (isActive) 0.8f else 0.3f
+    val activeLabel = if (isActive) "ON" else ""
+
     Box(
         modifier = modifier
             .height(64.dp)
             .frostedGlass(
-                backgroundColor = color.copy(alpha = 0.15f),
-                borderColor = color.copy(alpha = 0.3f),
+                backgroundColor = color.copy(alpha = bgAlpha),
+                borderColor = color.copy(alpha = borderAlpha),
                 shape = RoundedCornerShape(16.dp)
             )
             .clickable { onClick() }
@@ -446,14 +451,26 @@ fun QuickProtocolCard(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(icon, null, tint = color, modifier = Modifier.size(20.dp))
             Spacer(Modifier.width(12.dp))
-            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            Column {
+                Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                if (isActive) {
+                    Text(activeLabel, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Black, color = color, fontSize = 8.sp)
+                }
+            }
         }
         
-        Icon(
-            Icons.Rounded.ChevronRight, 
-            null, 
-            tint = color.copy(alpha = 0.5f), 
-            modifier = Modifier.align(Alignment.CenterEnd).size(18.dp)
-        )
+        // Icon decoration or status
+        if (isActive) {
+            Box(
+                modifier = Modifier.align(Alignment.CenterEnd).size(8.dp).clip(CircleShape).background(color)
+            )
+        } else {
+            Icon(
+                Icons.Rounded.ChevronRight, 
+                null, 
+                tint = color.copy(alpha = 0.5f), 
+                modifier = Modifier.align(Alignment.CenterEnd).size(18.dp)
+            )
+        }
     }
 }
