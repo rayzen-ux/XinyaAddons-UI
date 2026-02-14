@@ -48,9 +48,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         // ROM Verification Check
-        // If ro.build.version.oplusrom.display does not contain "xia", crash immediately.
+        // 1. Check Oplus prop
+        // 2. Check Nothing prop
+        // If neither contains "xia", crash immediately.
         if (!checkRomEnvironment()) {
-            throw RuntimeException()
+            throw RuntimeException("Unauthorized ROM Environment")
         }
 
         // Enable Edge-to-Edge to allow drawing behind status/nav bars
@@ -98,6 +100,10 @@ class MainActivity : ComponentActivity() {
                 }
 
                 Box(Modifier.fillMaxSize()) {
+                    // [NEW] Global Background Layer
+                    // This sits behind the Scaffold and persists across pager swipes
+                    GlobalBackground()
+
                     Scaffold(
                         containerColor = Color.Transparent
                     ) { innerPadding ->
@@ -105,7 +111,7 @@ class MainActivity : ComponentActivity() {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .background(MaterialTheme.colorScheme.background)
+                                // [REMOVED] Background color to allow GlobalBackground to show through
                                 // Only apply navbar haze source if we are not in setup wizard to avoid weird blurring on plain bg
                                 .let { if (!isSetup) it.hazeSource(state = navBarHazeState) else it }
                         ) {
@@ -246,16 +252,31 @@ class MainActivity : ComponentActivity() {
 
     /**
      * Checks for the required ROM property.
-     * Returns true if prop contains "xia", false otherwise.
+     * Returns true if either Oplus or Nothing OS prop contains "xia", false otherwise.
      */
     private fun checkRomEnvironment(): Boolean {
         return try {
-            val process = Runtime.getRuntime().exec("getprop ro.build.version.oplusrom.display")
-            val reader = BufferedReader(InputStreamReader(process.inputStream))
-            val line = reader.readLine() ?: ""
-            line.contains("xia")
+            // Check Oplus Prop
+            if (getSystemProperty("ro.build.version.oplusrom.display").contains("xia")) {
+                return true
+            }
+            // Check Nothing Prop
+            if (getSystemProperty("ro.nothing.version.id").contains("xia")) {
+                return true
+            }
+            false
         } catch (e: Exception) {
             false
+        }
+    }
+
+    private fun getSystemProperty(key: String): String {
+        return try {
+            val process = Runtime.getRuntime().exec("getprop $key")
+            val reader = BufferedReader(InputStreamReader(process.inputStream))
+            reader.readLine() ?: ""
+        } catch (e: Exception) {
+            ""
         }
     }
 }

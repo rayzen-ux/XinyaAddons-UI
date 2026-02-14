@@ -17,6 +17,7 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <application
         android:allowBackup="true"
         android:label="Xinya Toolkit"
@@ -40,15 +41,60 @@
 
             <meta-data
                 android:name="com.android.settings.category"
-                android:value="com.oplus.settings.category.ia.more_system_settings" />
+                android:value="com.android.settings.category.ia.homepage" />
 
             <meta-data
                 android:name="com.android.settings.summary"
                 android:value="Customizable Utilities and Additional Features" />
 
             <meta-data android:name="com.android.settings.order" android:value="-41" />
-
         </activity>
+
+        <activity-alias
+            android:name=".MainActivityOplus"
+            android:targetActivity=".MainActivity"
+            android:exported="true"
+            android:label="Xinya Toolkit"
+            android:icon="@mipmap/ic_launcher">
+            
+            <intent-filter>
+                <action android:name="com.android.settings.action.IA_SETTINGS" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+
+            <meta-data
+                android:name="com.android.settings.category"
+                android:value="com.oplus.settings.category.ia.more_system_settings" />
+                
+            <meta-data
+                android:name="com.android.settings.summary"
+                android:value="Customizable Utilities and Additional Features" />
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivitySystem"
+            android:targetActivity=".MainActivity"
+            android:exported="true"
+            android:label="Xinya Toolkit"
+            android:icon="@mipmap/ic_launcher">
+            
+            <intent-filter>
+                <action android:name="com.android.settings.action.IA_SETTINGS" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+
+            <meta-data
+                android:name="com.android.settings.category"
+                android:value="com.android.settings.category.ia.system" />
+            
+            <meta-data
+                android:name="com.android.settings.summary"
+                android:value="Customizable Utilities and Additional Features" />
+
+            <meta-data
+                android:name="com.android.settings.order"
+                android:value="100" />
+        </activity-alias>
 
         <activity-alias
             android:name=".Launcher"

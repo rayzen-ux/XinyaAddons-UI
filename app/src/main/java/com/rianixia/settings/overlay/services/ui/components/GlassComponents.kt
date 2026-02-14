@@ -223,44 +223,11 @@ fun GradientBlurAppBar(
 
 @Composable
 fun MaterialGlassScaffold(content: @Composable BoxScope.() -> Unit) {
-    val colorScheme = MaterialTheme.colorScheme
-    
+    // Removed: background(), Canvas drawing, and gradients.
+    // This allows the GlobalBackground from MainActivity to show through.
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colorScheme.background)
+        modifier = Modifier.fillMaxSize()
     ) {
-        val blurRadius = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) 100.dp else 0.dp
-        
-        Canvas(
-            modifier = Modifier
-                .fillMaxSize()
-                .blur(blurRadius)
-                .alpha(0.5f)
-        ) {
-            val w = size.width
-            val h = size.height
-            drawCircle(color = colorScheme.primaryContainer, radius = w * 0.8f, center = Offset(0f, 0f))
-            drawCircle(color = colorScheme.tertiaryContainer, radius = w * 0.8f, center = Offset(w, h))
-        }
-
-        Box(modifier = Modifier.fillMaxSize()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(100.dp)
-                    .align(Alignment.TopCenter)
-                    .background(Brush.verticalGradient(listOf(colorScheme.background, Color.Transparent)))
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(100.dp)
-                    .align(Alignment.BottomCenter)
-                    .background(Brush.verticalGradient(listOf(Color.Transparent, colorScheme.background)))
-            )
-        }
-        
         content()
     }
 }
