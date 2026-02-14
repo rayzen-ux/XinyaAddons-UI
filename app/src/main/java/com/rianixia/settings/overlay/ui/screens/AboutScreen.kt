@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+// [FIXED] Updated import to AutoMirrored
+import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -325,7 +327,7 @@ private fun CreditRow(role: String, name: String, icon: ImageVector, onClick: ()
             )
         }
         Icon(
-            Icons.Rounded.OpenInNew,
+            Icons.AutoMirrored.Rounded.OpenInNew, // [FIXED]
             contentDescription = null,
             modifier = Modifier.size(16.dp),
             tint = MaterialTheme.colorScheme.outline

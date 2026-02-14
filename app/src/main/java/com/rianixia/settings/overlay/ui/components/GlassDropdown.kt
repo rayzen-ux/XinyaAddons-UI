@@ -46,7 +46,9 @@ fun <T> GlassDropdown(
     // Master Transition State
     val transitionState = remember { MutableTransitionState(expanded) }
     transitionState.targetState = expanded
-    val transition = updateTransition(transitionState, label = "GlassDropdown")
+    
+    // [FIXED] Replaced deprecated updateTransition with rememberTransition
+    val transition = rememberTransition(transitionState, label = "GlassDropdown")
 
     // Arrow Rotation
     val rotation by transition.animateFloat(

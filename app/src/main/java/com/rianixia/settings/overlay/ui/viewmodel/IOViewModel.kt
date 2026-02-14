@@ -2,6 +2,7 @@ package com.rianixia.settings.overlay.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.github.megatronking.stringfog.annotation.StringFogIgnore
 import com.rianixia.settings.overlay.data.IORepository
 import com.rianixia.settings.overlay.data.IoDevice
 import kotlinx.coroutines.Job
@@ -24,11 +25,16 @@ data class IOUiState(
     val isMixedState: Boolean = false
 )
 
-// One-shot events for UI side effects (Toasts)
-sealed class IoEvent {
-    data class SchedulerChanged(val schedulerName: String) : IoEvent()
+// [FIXED] Changed from 'sealed class/interface' to standard 'interface'
+// This removes the 'PermittedSubclasses' attribute and synthetic constructors that cause the StringFog ASM transformer to crash.
+// Note: If your UI uses a 'when' expression on this event, you may need to add an 'else -> {}' branch.
+@StringFogIgnore
+interface IoEvent {
+    @StringFogIgnore
+    data class SchedulerChanged(val schedulerName: String) : IoEvent
 }
 
+@StringFogIgnore
 class IOViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow(IOUiState())
@@ -76,22 +82,20 @@ class IOViewModel : ViewModel() {
         val effectiveCurrent = if (isMixed) "Mixed" else firstActive
 
         // 2. Toast Logic: Check for confirmed changes
-        // We only trigger if this is NOT the initial load and state has actually changed
         if (!isInitial) {
             checkForStateChange(devices)
         }
         
-        // Update internal tracking map for next poll
+        // Update internal tracking map
         previousDevicesState = devices.associate { it.name to it.currentScheduler }
 
-        // 3. Update UI State (Authoritative, no optimistic prediction)
+        // 3. Update UI State
         _uiState.update { current ->
             current.copy(
                 isLoading = false,
                 devices = devices,
                 unifiedAvailableSchedulers = allSchedulers,
                 currentEffectiveScheduler = effectiveCurrent,
-                // Target reflects what's in the property, or defaults to effective if not set
                 targetScheduler = savedTarget.ifBlank { effectiveCurrent },
                 isMixedState = isMixed
             )
@@ -101,30 +105,19 @@ class IOViewModel : ViewModel() {
     private suspend fun checkForStateChange(newDevices: List<IoDevice>) {
         if (previousDevicesState.isEmpty()) return
 
-        // Check if any device has a different scheduler than before
         val changedDevice = newDevices.find { device ->
             val oldSched = previousDevicesState[device.name]
             oldSched != null && oldSched != device.currentScheduler
         }
 
         if (changedDevice != null) {
-            // A change was confirmed by the system properties.
-            // According to requirements, we fire the toast once per batch.
-            // We use the scheduler of the device that changed as the "to <scheduler>" value.
-            // If strictly global sync is expected, this usually aligns. 
-            // If mixed, we notify about the confirmed change we just saw.
             _events.send(IoEvent.SchedulerChanged(changedDevice.currentScheduler))
         }
     }
 
     fun setScheduler(scheduler: String) {
         viewModelScope.launch {
-            // Requirement: No Optimistic UI. 
-            // We strictly set the property and wait for the poller to update the UI.
             IORepository.setTargetScheduler(scheduler)
-            
-            // We immediately refresh once to minimize latency if the system is fast,
-            // but we rely on the repository's property read for the UI update.
             delay(100)
             refreshData(isInitial = false)
         }

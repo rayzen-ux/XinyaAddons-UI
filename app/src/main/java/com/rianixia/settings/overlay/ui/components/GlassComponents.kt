@@ -7,7 +7,8 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowBack
+// [FIXED] Updated import to AutoMirrored
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -188,7 +189,7 @@ fun GradientBlurAppBar(
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
-                        imageVector = Icons.Rounded.ArrowBack,
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack, // [FIXED]
                         contentDescription = "Back",
                         modifier = Modifier.size(20.dp)
                     )
@@ -223,8 +224,6 @@ fun GradientBlurAppBar(
 
 @Composable
 fun MaterialGlassScaffold(content: @Composable BoxScope.() -> Unit) {
-    // Removed: background(), Canvas drawing, and gradients.
-    // This allows the GlobalBackground from MainActivity to show through.
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -329,7 +328,7 @@ fun FloatingTopBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onBack) {
-                Icon(Icons.Rounded.ArrowBack, "Back", tint = colorScheme.onSurface)
+                Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back", tint = colorScheme.onSurface) // [FIXED]
             }
             Spacer(modifier = Modifier.width(8.dp))
             Text(title, style = MaterialTheme.typography.titleLarge, color = colorScheme.onSurface)
@@ -441,7 +440,7 @@ fun ScreenHeader(title: String, subtitle: String) {
 @Composable
 fun SubScreenHeader(title: String, onBack: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 16.dp)) {
-        IconButton(onClick = onBack) { Icon(Icons.Rounded.ArrowBack, contentDescription = null, tint = MaterialTheme.colorScheme.onBackground) }
+        IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = null, tint = MaterialTheme.colorScheme.onBackground) } // [FIXED]
         Spacer(Modifier.width(8.dp))
         Text(title, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
     }

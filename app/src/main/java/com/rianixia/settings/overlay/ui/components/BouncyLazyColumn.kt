@@ -55,7 +55,8 @@ fun rememberBouncyScroll(): BouncyScrollState {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                 // Only process drag gestures
-                if (source != NestedScrollSource.Drag) return Offset.Zero
+                // [FIXED] Drag replaced by UserInput
+                if (source != NestedScrollSource.UserInput) return Offset.Zero
 
                 val delta = available.y
                 val currentOffset = offsetState.floatValue
@@ -89,7 +90,8 @@ fun rememberBouncyScroll(): BouncyScrollState {
 
             override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
                 // Only process drag gestures
-                if (source != NestedScrollSource.Drag) return Offset.Zero
+                // [FIXED] Drag replaced by UserInput
+                if (source != NestedScrollSource.UserInput) return Offset.Zero
 
                 val delta = available.y
                 

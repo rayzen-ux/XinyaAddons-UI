@@ -17,43 +17,53 @@ plugins {
 }
 
 stringfog {
-    implementation 'com.github.megatronking.stringfog.xor.StringFogImpl'
-    fogPackages = ['com.rianixia.settings.overlay']
-    kg new com.github.megatronking.stringfog.plugin.kg.RandomKeyGenerator()
-    enable true
-    debug false
+    implementation = 'com.github.megatronking.stringfog.xor.StringFogImpl'
+    // [FIX] Explicitly list subpackages to exclude 'ui.viewmodel' and prevent the IoEvent crash
+    fogPackages = [
+        'com.rianixia.settings.overlay.data',
+        'com.rianixia.settings.overlay.security',
+        'com.rianixia.settings.overlay.services',
+        'com.rianixia.settings.overlay.ui.components',
+        'com.rianixia.settings.overlay.ui.screens',
+        'com.rianixia.settings.overlay.ui.theme',
+        'com.rianixia.settings.overlay.MainActivity'
+    ]
+    kg = new com.github.megatronking.stringfog.plugin.kg.RandomKeyGenerator()
+    enable = true
+    debug = false
 }
 
 android {
-    namespace 'com.rianixia.settings.overlay'
-    // [UPGRADE] API 35
-    compileSdk 35
+    namespace = 'com.rianixia.settings.overlay'
+    // [FIXED] Added '=' to fix deprecation warning
+    compileSdk = 35
 
     defaultConfig {
-        applicationId "com.rianixia.settings.overlay"
-        minSdk 26
-        // [UPGRADE] API 35
-        targetSdk 35
-        versionCode 1
-        versionName "1.0"
+        applicationId = "com.rianixia.settings.overlay"
+        // [FIXED] Added '=' to fix deprecation warning
+        minSdk = 26
+        // [FIXED] Added '=' to fix deprecation warning
+        targetSdk = 35
+        versionCode = 1
+        versionName = "1.0"
 
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
-            useSupportLibrary true
+            useSupportLibrary = true
         }
     }
 
     buildFeatures {
-        compose true
-        buildConfig true
+        compose = true
+        buildConfig = true
     }
 
     signingConfigs {
         release {
-            storeFile file("release.keystore")
-            storePassword "ryan123pro"
-            keyAlias "rianixia_key"
-            keyPassword "ryan123pro"
+            storeFile = file("release.keystore")
+            storePassword = "ryan123pro"
+            keyAlias = "rianixia_key"
+            keyPassword = "ryan123pro"
         }
     }
 
@@ -63,21 +73,21 @@ android {
         }
 
         release {
-            signingConfig signingConfigs.release
-            minifyEnabled true
-            shrinkResources true
+            signingConfig = signingConfigs.release
+            minifyEnabled = true
+            shrinkResources = true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             buildConfigField "String", "ALLOWED_SIGNATURE_HASH", "\"f155e5c3e75c10afe49d3cbf71d9a37bf4d7e1807449a5c23a3b672938901040\""
         }
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '17'
     }
 
     packagingOptions {
@@ -89,6 +99,8 @@ android {
 
 dependencies {
     implementation libs.stringfog.xor
+    // [ADDED] Interface for @StringFogIgnore annotation
+    implementation libs.stringfog.interface
     
     // Glassmorphism
     implementation libs.haze

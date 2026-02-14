@@ -13,6 +13,8 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+// [FIXED] Updated import to AutoMirrored
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -38,7 +40,8 @@ import com.rianixia.settings.overlay.ui.components.MaterialGlassScaffold
 import com.rianixia.settings.overlay.ui.components.frostedGlass
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.haze
-import dev.chrisbanes.haze.hazeChild
+// [FIXED] Removed deprecated hazeChild import if unused, or replaced usage below
+import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -161,7 +164,8 @@ fun SetupWizardScreen(navController: NavController) {
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
-                    .hazeChild(state = hazeState)
+                    // [FIXED] hazeChild -> hazeEffect
+                    .hazeEffect(state = hazeState)
                     .background(
                         MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
                     )
@@ -223,7 +227,7 @@ fun SetupWizardScreen(navController: NavController) {
                             if (pagerState.currentPage == pages.size - 1) 
                                 Icons.Rounded.Check 
                             else 
-                                Icons.Rounded.ArrowForward,
+                                Icons.AutoMirrored.Rounded.ArrowForward, // [FIXED]
                             contentDescription = null,
                             modifier = Modifier.size(20.dp)
                         )

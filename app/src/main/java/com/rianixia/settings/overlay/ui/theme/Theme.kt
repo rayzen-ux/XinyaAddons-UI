@@ -64,9 +64,9 @@ fun XinyaTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            // Transparent status bar to allow content to flow behind
-            window.statusBarColor = android.graphics.Color.TRANSPARENT 
-            window.navigationBarColor = android.graphics.Color.TRANSPARENT
+            
+            // [FIXED] Removed deprecated window color assignments.
+            // Edge-to-edge handling in MainActivity takes care of transparency.
             
             val insetsController = WindowCompat.getInsetsController(window, view)
             insetsController.isAppearanceLightStatusBars = !darkTheme
