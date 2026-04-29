@@ -25,9 +25,6 @@ data class IOUiState(
     val isMixedState: Boolean = false
 )
 
-// [FIXED] Changed from 'sealed class/interface' to standard 'interface'
-// This removes the 'PermittedSubclasses' attribute and synthetic constructors that cause the StringFog ASM transformer to crash.
-// Note: If your UI uses a 'when' expression on this event, you may need to add an 'else -> {}' branch.
 @StringFogIgnore
 interface IoEvent {
     @StringFogIgnore
@@ -44,8 +41,6 @@ class IOViewModel : ViewModel() {
     val events = _events.receiveAsFlow()
 
     private var monitoringJob: Job? = null
-    
-    // Track previous state to determine if a change occurred for Toast triggers
     private var previousDevicesState: Map<String, String> = emptyMap()
 
     init {
@@ -55,12 +50,9 @@ class IOViewModel : ViewModel() {
     private fun startMonitoring() {
         monitoringJob?.cancel()
         monitoringJob = viewModelScope.launch {
-            // Initial load
             refreshData(isInitial = true)
-            
-            // Polling loop (Property Observer fallback)
             while (isActive) {
-                delay(2000) // 2-second polling interval
+                delay(2000)
                 refreshData(isInitial = false)
             }
         }
@@ -68,35 +60,30 @@ class IOViewModel : ViewModel() {
 
     private suspend fun refreshData(isInitial: Boolean) {
         val devices = IORepository.getIoDevices()
-        val savedTarget = IORepository.getTargetScheduler()
 
         if (devices.isEmpty()) {
             _uiState.update { it.copy(isLoading = false, devices = emptyList()) }
             return
         }
 
-        // 1. Calculate Unified State
         val allSchedulers = devices.flatMap { it.availableSchedulers }.toSet().sorted()
         val firstActive = devices.first().currentScheduler
         val isMixed = devices.any { it.currentScheduler != firstActive }
         val effectiveCurrent = if (isMixed) "Mixed" else firstActive
 
-        // 2. Toast Logic: Check for confirmed changes
         if (!isInitial) {
             checkForStateChange(devices)
         }
-        
-        // Update internal tracking map
+
         previousDevicesState = devices.associate { it.name to it.currentScheduler }
 
-        // 3. Update UI State
         _uiState.update { current ->
             current.copy(
                 isLoading = false,
                 devices = devices,
                 unifiedAvailableSchedulers = allSchedulers,
                 currentEffectiveScheduler = effectiveCurrent,
-                targetScheduler = savedTarget.ifBlank { effectiveCurrent },
+                targetScheduler = effectiveCurrent,
                 isMixedState = isMixed
             )
         }
@@ -104,12 +91,10 @@ class IOViewModel : ViewModel() {
 
     private suspend fun checkForStateChange(newDevices: List<IoDevice>) {
         if (previousDevicesState.isEmpty()) return
-
         val changedDevice = newDevices.find { device ->
             val oldSched = previousDevicesState[device.name]
             oldSched != null && oldSched != device.currentScheduler
         }
-
         if (changedDevice != null) {
             _events.send(IoEvent.SchedulerChanged(changedDevice.currentScheduler))
         }
@@ -117,8 +102,8 @@ class IOViewModel : ViewModel() {
 
     fun setScheduler(scheduler: String) {
         viewModelScope.launch {
-            IORepository.setTargetScheduler(scheduler)
-            delay(100)
+            IORepository.setAllSchedulers(scheduler)
+            delay(300)
             refreshData(isInitial = false)
         }
     }
