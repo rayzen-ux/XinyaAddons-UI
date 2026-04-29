@@ -16,25 +16,29 @@ object IORepository {
     private const val TAG = "IORepo"
 
     suspend fun getIoDevices(): List<IoDevice> = withContext(Dispatchers.IO) {
-        val devices = mutableListOf<IoDevice>()
-        val blockDir = File("/sys/block")
-        
-        blockDir.listFiles()?.forEach { dev ->
-            val schedulerFile = File("${dev.absolutePath}/queue/scheduler")
-            if (schedulerFile.exists()) {
-                try {
-                    val content = RootShell.readFile(schedulerFile.absolutePath)
-                    if (content.isNotBlank()) {
-                        val (current, available) = parseSchedulerString(content)
-                        devices.add(IoDevice(dev.name, dev.absolutePath, current, available))
-                    }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to read scheduler for ${dev.name}", e)
+    val devices = mutableListOf<IoDevice>()
+    val physicalPrefixes = listOf("mmcblk", "sda", "sdb", "sdc", "nvme")
+    val blockDir = File("/sys/block")
+
+    blockDir.listFiles()?.filter { dev ->
+        physicalPrefixes.any { dev.name.startsWith(it) } &&
+        !dev.name.contains("p") // exclude partitions like mmcblk0p1
+    }?.forEach { dev ->
+        val schedulerFile = File("${dev.absolutePath}/queue/scheduler")
+        if (schedulerFile.exists()) {
+            try {
+                val content = schedulerFile.readText().trim()
+                if (content.isNotBlank()) {
+                    val (current, available) = parseSchedulerString(content)
+                    devices.add(IoDevice(dev.name, dev.absolutePath, current, available))
                 }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to read scheduler for ${dev.name}", e)
             }
         }
-        devices.sortedBy { it.name }
     }
+    devices.sortedBy { it.name }
+}
 
     suspend fun setScheduler(device: IoDevice, scheduler: String) = withContext(Dispatchers.IO) {
         RootShell.writeFile("${device.path}/queue/scheduler", scheduler)
