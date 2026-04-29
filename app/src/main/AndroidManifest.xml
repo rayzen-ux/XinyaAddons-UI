@@ -98,7 +98,7 @@
 
         <activity-alias
             android:name=".Launcher"
-            android:enabled="false"
+            android:enabled="true"
             android:exported="true"
             android:icon="@mipmap/ic_launcher"
             android:label="Xinya Toolkit"
