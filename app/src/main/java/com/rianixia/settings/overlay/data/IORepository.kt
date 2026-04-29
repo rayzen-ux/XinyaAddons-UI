@@ -3,6 +3,7 @@ package com.rianixia.settings.overlay.data
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
 
 data class IoDevice(
     val name: String,
@@ -13,64 +14,49 @@ data class IoDevice(
 
 object IORepository {
     private const val TAG = "IORepo"
-    
-    // Property Keys
-    private const val PROP_DEVICE_LIST = "persist.sys.rianixia.io.devices"
-    private const val PROP_DEV_PREFIX = "persist.sys.rianixia.io.dev."
-    private const val PROP_TARGET_SCHED = "persist.sys.rianixia.io.scheduler"
 
-    /**
-     * Reads the device list and their states from system properties.
-     */
     suspend fun getIoDevices(): List<IoDevice> = withContext(Dispatchers.IO) {
         val devices = mutableListOf<IoDevice>()
+        val blockDir = File("/sys/block")
         
-        // 1. Read the list of devices (e.g., "mmcblk0,sda,sdb")
-        val deviceListStr = SystemProps.get(PROP_DEVICE_LIST, "")
-        if (deviceListStr.isBlank()) {
-            return@withContext emptyList()
-        }
-
-        val deviceNames = deviceListStr.split(",").filter { it.isNotBlank() }
-
-        // 2. Fetch details for each device from properties
-        deviceNames.forEach { name ->
-            // Read prop: persist.sys.rianixia.io.dev.<name>
-            val schedString = SystemProps.get("$PROP_DEV_PREFIX$name", "")
-            
-            if (schedString.isNotBlank()) {
-                val (current, available) = parseSchedulerString(schedString)
-                val fakePath = "/sys/block/$name"
-                devices.add(IoDevice(name, fakePath, current, available))
+        blockDir.listFiles()?.forEach { dev ->
+            val schedulerFile = File("${dev.absolutePath}/queue/scheduler")
+            if (schedulerFile.exists()) {
+                try {
+                    val content = RootShell.readFile(schedulerFile.absolutePath)
+                    if (content.isNotBlank()) {
+                        val (current, available) = parseSchedulerString(content)
+                        devices.add(IoDevice(dev.name, dev.absolutePath, current, available))
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to read scheduler for ${dev.name}", e)
+                }
             }
         }
-
         devices.sortedBy { it.name }
+    }
+
+    suspend fun setScheduler(device: IoDevice, scheduler: String) = withContext(Dispatchers.IO) {
+        RootShell.writeFile("${device.path}/queue/scheduler", scheduler)
+    }
+
+    suspend fun setAllSchedulers(scheduler: String) = withContext(Dispatchers.IO) {
+        getIoDevices().forEach { device ->
+            RootShell.writeFile("${device.path}/queue/scheduler", scheduler)
+        }
     }
 
     private fun parseSchedulerString(content: String): Pair<String, List<String>> {
         val available = mutableListOf<String>()
-        var current = "none" 
-        
-        val tokens = content.split(Regex("\\s+"))
-        tokens.forEach { token ->
+        var current = "none"
+        content.split(Regex("\\s+")).forEach { token ->
             if (token.startsWith("[") && token.endsWith("]")) {
-                val clean = token.substring(1, token.length - 1)
-                current = clean
-                available.add(clean)
-            } else {
+                current = token.substring(1, token.length - 1)
+                available.add(current)
+            } else if (token.isNotBlank()) {
                 available.add(token)
             }
         }
         return Pair(current, available)
-    }
-
-    suspend fun getTargetScheduler(): String = withContext(Dispatchers.IO) {
-        SystemProps.get(PROP_TARGET_SCHED, "")
-    }
-
-    suspend fun setTargetScheduler(scheduler: String) = withContext(Dispatchers.IO) {
-        Log.i(TAG, "Setting global target scheduler property: $scheduler")
-        SystemProps.set(PROP_TARGET_SCHED, scheduler)
     }
 }
