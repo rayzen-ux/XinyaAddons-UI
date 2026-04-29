@@ -47,14 +47,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // ROM Verification Check
-        // 1. Check Oplus prop
-        // 2. Check Nothing prop
-        // If neither contains "xia", crash immediately.
-        if (!checkRomEnvironment()) {
-            throw RuntimeException("Unauthorized ROM Environment")
-        }
-
         // Enable Edge-to-Edge to allow drawing behind status/nav bars
         enableEdgeToEdge()
         
